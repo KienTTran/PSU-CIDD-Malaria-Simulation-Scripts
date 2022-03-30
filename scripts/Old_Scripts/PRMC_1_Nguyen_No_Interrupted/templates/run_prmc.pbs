@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1
+
+#PBS -l walltime=168:00:00
+
+#PBS -l pmem=128gb
+
+#PBS -A mfb9_b_g_sc_default
+
+#PBS -j oe
+
+#PBS -o $HOME/Simulations/Results/#TAG#/log/
+
+#PBS -e $HOME/Simulations/Results/#TAG#/log/
+
+# Get started
+
+echo "Job started on $(hostname) at $(date)"
+
+# Go to the correct place
+
+cd $PBS_O_WORKDIR
+
+# Run the job itself
+
+# Arguments from Schedule_Run_*.sh
+# qsub -F ${location} ${therapyId} ${prmcSize} ${ifRate} ${tag} ${i}
+# $1 - ${location}
+# $2 - ${population}
+# $3 - ${beta}
+# $4 - ${therapyId}
+# $5 - ${prmcSize}
+# $6 - ${ifRate}
+# $7 - ${PRMCStartYear}
+# $8 - ${PRMCEndYear}
+# $9 - ${tag}
+# $10 - ${i}
+cd $HOME/Simulations/bin
+
+./MaSim_Nguyen -i $HOME/Simulations/Results/${7}/config/sim_prmc_${1}_${2}_${3}_${4}_${5}_${6}_${7}_${8}.yml -r MosquitoReporter -o "$HOME/Simulations/Results/${7}/output/" -j ${8}
+
+# Finish up
+
+echo "Job Ended at $(date)"

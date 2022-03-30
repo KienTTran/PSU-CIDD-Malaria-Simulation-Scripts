@@ -1,0 +1,24 @@
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata:
+    annotations:
+      openshift.io/quota-tier: Medium
+    creationTimestamp: 
+    labels:
+      quota-tier: Medium
+    name: burst-quota
+    namespace: testing
+    resourceVersion: ""
+    selfLink: /api/v1/namespaces/testing/resourcequotas/burst-quota
+    uid: 
+  spec:
+    hard:
+      cpu: "8"
+      memory: 16Gi
+  status:
+    hard:
+      cpu: "8"
+      memory: 16Gi
+    used:
+      cpu: 20m
+      memory: 256Mi

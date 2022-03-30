@@ -1,0 +1,29 @@
+#!/bin/bash
+
+#PBS -l nodes=1:ppn=1
+
+#PBS -l walltime=36:00:00
+
+#PBS -l pmem=64gb
+
+#PBS -A mfb9_b_g_sc_default
+
+#PBS -j oe
+
+# Get started
+
+echo "Job started on $(hostname) at $(date)"
+
+# Go to the correct place
+
+cd $PBS_O_WORKDIR
+
+# Run the job itself
+
+cd ../../build/bin
+
+./MaSim -i ../../kientt/Demo_SFT_Mutation_On_$1_$3_$2.yml -r MonthlyReporter -o "../../kientt/analysis/" -j $2 -x "$1_SFT_Mutation_On_$3"
+
+# Finish up
+
+echo "Job Ended at $(date)"
