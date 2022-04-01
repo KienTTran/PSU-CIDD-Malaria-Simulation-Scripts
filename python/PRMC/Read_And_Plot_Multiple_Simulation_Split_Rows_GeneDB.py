@@ -17,21 +17,10 @@ import math
 
 plot_keywords = [
             "gene",
-            # "_1M_800_",
-            # "_0.99_0.3_",
-            # "_0.99_0.6_",
-            # "_2007_",
-            # "_2017_",
-            # "_2027_",
-            # "_2037_",
             ]
-start_year = 2007
-# end_year = 2017
-end_year = 2027
-# end_year = 2047
-# display = "Year"
+start_year = 2000
+end_year = 2040
 display = "Month"
-# display = "Day"
 year_interval = 1
 month_interval = 12
 day_interval = 90
@@ -98,7 +87,7 @@ def plot_headers(title, data_mean, data_min, data_max, \
                         )
         axes[index].set_title("Genotype Frequency",fontsize=12)
         # axes[index].axhline(y=0.25, color='grey', linestyle='--', linewidth = 2.0, alpha = 0.4)
-        axes[index].legend(loc='upper right', labels=[headers for headers in rep_header_observe], ncol = 2)
+        axes[index].legend(loc='lower right', labels=[headers for headers in rep_header_observe], ncol = 2)
     else:
         for header in rep_header_observe:
             sns.lineplot(data = data_mean, 
@@ -153,8 +142,9 @@ for file_db,file_freq in zip(rep_file_db,rep_file_freq):
     try:
         rep_data_gene_db = pd.read_csv(file_db, sep='\t', header=None,index_col=None)
         rep_data_gene_db.columns = ["id","aa_sequence"]   
-        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None)
+        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None, skiprows=1)
         rep_data_gene_freq.dropna(how='all', axis=1, inplace=True)
+        rep_data_gene_freq.fillna(0)
         rep_data_gene_freq.columns = rep_data_gene_db["aa_sequence"]
         rep_data_gene_freq_csv.append(rep_data_gene_freq)
     except pd.errors.EmptyDataError:
