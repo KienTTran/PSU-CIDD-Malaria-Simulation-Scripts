@@ -1,0 +1,3 @@
+#!/bin/bash
+source Scripts/#folder#/Schedule_Run_PRMC.sh &&
+runReplicates ktt5121 #folder# #binary# #location# #population# #beta# #therapy_id# #prmc_size# #ifr# #start_year# #end_year# #replicates# #folder#_#beta#_#ifr#
