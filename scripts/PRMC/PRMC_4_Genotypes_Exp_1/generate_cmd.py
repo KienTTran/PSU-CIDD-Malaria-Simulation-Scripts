@@ -30,18 +30,18 @@ if __name__=="__main__":
     template = (r"cmd.template")    
     line_out_template = ""
     param_key_more_than_1_indices = []
-    with open(template) as old_file:
-        with open(r"run_cmd.sh", "w") as new_file:
-            line_count = 0
-            for line in old_file:
-                line_out = line
-                if line_count <= 1:
-                    line_out = re.sub("#folder#", folder, line_out)
-                    new_file.write(line_out)
-                else:   
-                    line_out = re.sub("#folder#", folder, line_out)
-                    new_file.write(line_out + " &&\n")
-                line_count += 1
+    # with open(template) as old_file:
+    #     with open(r"run_cmd.sh", "w") as new_file:
+    #         line_count = 0
+    #         for line in old_file:
+    #             line_out = line
+    #             if line_count <= 1:
+    #                 line_out = re.sub("#folder#", folder, line_out)
+    #                 new_file.write(line_out)
+    #             else:   
+    #                 line_out = re.sub("#folder#", folder, line_out)
+    #                 new_file.write(line_out + " &&\n")
+    #             line_count += 1
                 
                 
     # with open(template) as old_file:

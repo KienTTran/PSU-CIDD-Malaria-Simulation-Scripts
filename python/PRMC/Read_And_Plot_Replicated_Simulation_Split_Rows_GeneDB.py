@@ -50,10 +50,11 @@ day_interval = 90
 # local_path = "D:/plot/new/1M/PRMC"
 # local_path = "D:/plot/new/Test/Normal"
 # local_path = "D:/plot/new/Test/PRMC"
-local_path = "D:/plot/new/1M/Test1/"
+# local_path = "D:/plot/new/1M/Test1/"
 # local_path = "D:/plot/new/1M/4-Genotypes/PRMC"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
+local_path = "D:/plot/Test1/"
 plot_delay = 2
 
 #Plot vars
@@ -153,7 +154,7 @@ for file_db,file_freq in zip(rep_file_db,rep_file_freq):
     try:
         rep_data_gene_db = pd.read_csv(file_db, sep='\t', header=None,index_col=None)
         rep_data_gene_db.columns = ["id","aa_sequence"]   
-        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None)
+        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None, skiprows=1)
         rep_data_gene_freq.dropna(how='all', axis=1, inplace=True)
         rep_data_gene_freq.columns = rep_data_gene_db["aa_sequence"]
         rep_data_gene_freq_csv.append(rep_data_gene_freq)
