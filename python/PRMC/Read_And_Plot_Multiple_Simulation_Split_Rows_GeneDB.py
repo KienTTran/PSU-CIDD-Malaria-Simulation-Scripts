@@ -39,10 +39,11 @@ day_interval = 90
 # local_path = "D:/plot/new/1M/PRMC"
 # local_path = "D:/plot/new/Test/Normal"
 # local_path = "D:/plot/new/Test/PRMC"
-local_path = "D:/plot/new/1M/Test1/"
+# local_path = "D:/plot/new/1M/Test1/"
 # local_path = "D:/plot/new/1M/4-Genotypes/PRMC"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
+local_path = "D:/plot/Test2/"
 plot_delay = 2
 
 #Plot vars
@@ -112,8 +113,12 @@ else:
     print("Ploting simulations")
     
 rep_data_gene_freq_csv = []
+rep_data_monthly_csv = []
+rep_data_summary_csv = []
 rep_file_db = []
 rep_file_freq = []
+rep_file_monthly = []
+rep_file_summary = []
 for rep_file in simulations:
     rep_tag = ""  
     rep_tags = []
@@ -147,9 +152,15 @@ for file_db,file_freq in zip(rep_file_db,rep_file_freq):
         rep_data_gene_freq.fillna(0)
         rep_data_gene_freq.columns = rep_data_gene_db["aa_sequence"]
         rep_data_gene_freq_csv.append(rep_data_gene_freq)
+        # rep_data_monthly = pd.read_csv(file_monthly, sep='\t', header=None,index_col=None)
+        # rep_data_monthly = rep_data_monthly.iloc[:,[10]]
+        # rep_data_monthly.columns = ["EIR","PFPR1"]
+        # rep_data_monthly_csv.append(rep_data_monthly)
+        # rep_data_gene_freq_csv.append(pd.concat([rep_data_gene_freq, rep_data_monthly], axis=1))
     except pd.errors.EmptyDataError:
         print('Empty csv file!')
         continue 
+       
 
 for csv in rep_data_gene_freq_csv:
     rep_data_raw = []

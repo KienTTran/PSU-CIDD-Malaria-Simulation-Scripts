@@ -25,9 +25,9 @@ plot_keywords = [
             # "_2027_",
             # "_2037_",
             ]
-start_year = 2007
+start_year = 2000
 # end_year = 2017
-end_year = 2027
+end_year = 2040
 # end_year = 2047
 # display = "Year"
 display = "Month"
@@ -213,7 +213,7 @@ for csv in rep_data_gene_freq_csv:
             data[introduced_genotypes[index]] = data[genotype] - data["temp"]
         del data["temp"]
                               
-    #rep_data_mean_observe = rep_data_observe[0]    
+    # rep_data_mean_observe = rep_data_observe[0]    
     
     rep_headers = rep_data_observe[0].columns
     # print(rep_headers)

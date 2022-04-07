@@ -13,5 +13,5 @@ def read_simulations(localpath,plot_keywords,delay):
         for file in files:
             if file.endswith(".txt") and all(x in file for x in plot_keywords):
                 rep_files.append(os.path.join(root, file))
-                
+    print(rep_files)            
     return rep_files
