@@ -9,7 +9,7 @@ import re
 import pandas as pd
 import numpy as np
 
-local_path = "D:/plot/Test2"
+local_path = "D:/plot/Test3"
 
 configs = [
 "sim_prmc_pop_500000_beta_0.030.yml",

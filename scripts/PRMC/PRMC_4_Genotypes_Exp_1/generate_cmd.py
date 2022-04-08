@@ -29,20 +29,45 @@ if __name__=="__main__":
     print("Will generate " + str(run_line_total) + " lines")
     template = (r"cmd.template")    
     line_out_template = ""
-    param_key_more_than_1_indices = []
-    # with open(template) as old_file:
-    #     with open(r"run_cmd.sh", "w") as new_file:
-    #         line_count = 0
-    #         for line in old_file:
-    #             line_out = line
-    #             if line_count <= 1:
-    #                 line_out = re.sub("#folder#", folder, line_out)
-    #                 new_file.write(line_out)
-    #             else:   
-    #                 line_out = re.sub("#folder#", folder, line_out)
-    #                 new_file.write(line_out + " &&\n")
-    #             line_count += 1
+    line_out_list = []
+
+    with open(template) as old_file:
+        with open(r"run_cmd.sh", "w") as new_file:
+            line_count = 0
+            for line in old_file:
+                line_out = line
+                if line_count <= 1:
+                    line_out = re.sub("#folder#", folder, line_out)
+                    new_file.write(line_out)
+                else:   
+                    line_out = re.sub("#folder#", folder, line_out)
+                    line_out_template = line_out
+                line_count += 1
+    
+    print(line_out_template)
+    
+    all_tempty = False
+    count = 0
+    
+    for index,key in enumerate(param_keys):
+        print("Key " + str(key) + " will be replaced by " + str(param_values[index]))
+                        
+        line_out = ""
+        if len(line_out_list) == 0:
+            for value in param_values[index]:
+                line_out_list.append(str(value))
+        else:
+            temp = []
+            for line in line_out_list:
+                for value in param_values[index]:
+                    temp.append(line + " - " + str(value))
+            line_out_list = temp
                 
+        # for value in param_values[index]:
+        #     print("  Value " + str(value))
+        
+    for index,line in enumerate(line_out_list):
+        print(index, line)                
                 
     # with open(template) as old_file:
     #     with open(r"run_cmd.sh", "w") as new_file:  
