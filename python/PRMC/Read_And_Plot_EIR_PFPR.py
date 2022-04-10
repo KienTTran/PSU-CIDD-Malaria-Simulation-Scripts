@@ -9,7 +9,8 @@ import re
 import pandas as pd
 import numpy as np
 
-local_path = "D:/plot/Test3"
+# local_path = "D:/plot/PRMC_4_Genotypes_Exp_6_add_biting_rate/raw"
+local_path = "D:/plot/PRMC_4_Genotypes_Exp_7_add_biting_rate_prmc_0.99/raw"
 
 configs = [
 "sim_prmc_pop_500000_beta_0.030.yml",

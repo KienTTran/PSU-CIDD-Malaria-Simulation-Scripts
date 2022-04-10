@@ -9,13 +9,7 @@ from Read_Simulations import read_simulations
 from Plot_Replicated_Simulations_Split_Rows import plot_replicated_simulations
 
 plot_keywords = [
-            "Daily_PG",
-            # "Daily_PRMC",
-            # "Single_",
-            "1M_800",
-            "_0.99_0.3",
-            "_2007_",
-            "_2027_",
+            "gene",
             ]
 start_year = 2007
 end_year = 2017
@@ -36,8 +30,9 @@ day_interval = 90
 # local_path = "D:/plot/new/"
 # local_path = "D:/plot/new/250K_500K_1M/"
 # local_path = "D:/plot/new/1M/"
-local_path = "D:/plot/new/1M/Parasite"
+# local_path = "D:/plot/new/1M/Parasite"
 # local_path = "D:/plot/new/1M/PRMC/"
+local_path = "D:/plot/PRMC_4_Genotypes_Exp_7_add_biting_rate_prmc_0.99/raw"
 plot_delay = 2
 
 def main():    
