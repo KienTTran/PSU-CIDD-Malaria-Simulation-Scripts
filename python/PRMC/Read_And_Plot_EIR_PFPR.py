@@ -9,8 +9,13 @@ import re
 import pandas as pd
 import numpy as np
 
+<<<<<<< Updated upstream
 # local_path = "D:/plot/PRMC_4_Genotypes_Exp_6_add_biting_rate/raw"
 local_path = "D:/plot/PRMC_4_Genotypes_Exp_7_add_biting_rate_prmc_0.99/raw"
+=======
+# local_path = "D:/plot/PRMC_4_Genotypes_Exp_3_p_infect_0.5/raw"
+local_path = "D:/plot/PRMC_4_Genotypes_Exp_6_add_biting_rate/raw"
+>>>>>>> Stashed changes
 
 configs = [
 "sim_prmc_pop_500000_beta_0.030.yml",
@@ -65,8 +70,7 @@ data_plot.columns = ["eir","pfpr",*["moi"+str(x) for x in range(10)],"month","be
 #%%
 sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
 for x in range(1,10):
-    data_plot["moi"+str(x)] = data_plot["moi"+str(x)]/sum_moi
-    
+    data_plot["moi"+str(x)] = data_plot["moi"+str(x)]/sum_moi   
 
 
 #%%

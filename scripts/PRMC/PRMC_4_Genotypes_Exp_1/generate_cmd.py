@@ -18,7 +18,10 @@ def read_parameters():
         
 if __name__=="__main__":
     file_path = str(Path.cwd())
-    folder = file_path.split("/")[-1]
+    if "\\" in file_path:
+        folder = file_path.split("\\")[-1]
+    else:
+        folder = file_path.split("/")[-1]
     print("Will generate cmd to folder: " + folder)
     param_keys, param_values = read_parameters()
     print(param_keys)
@@ -27,42 +30,43 @@ if __name__=="__main__":
     for value in param_values:
         run_line_total *= len(value)
     print("Will generate " + str(run_line_total) + " lines")
-    template = (r"cmd.template")    
-    line_out_template = ""
-    line_out_list = []
-
-    with open(template) as old_file:
-        with open(r"run_cmd.sh", "w") as new_file:
-            line_count = 0
-            for line in old_file:
-                line_out = line
-                if line_count <= 1:
-                    line_out = re.sub("#folder#", folder, line_out)
-                    new_file.write(line_out)
-                else:   
-                    line_out = re.sub("#folder#", folder, line_out)
-                    line_out_template = line_out
-                line_count += 1
-    
-    print(line_out_template)
-    
-    all_tempty = False
-    count = 0
+    template = (r"cmd.template")   
+    all_value_list = []
     
     for index,key in enumerate(param_keys):
         print("Key " + str(key) + " will be replaced by " + str(param_values[index]))
-                        
-        line_out = ""
-        if len(line_out_list) == 0:
+        if len(all_value_list) == 0:
             for value in param_values[index]:
-                line_out_list.append(str(value))
+                all_value_list.append(str(value))
         else:
             temp = []
-            for line in line_out_list:
+            for line in all_value_list:
                 for value in param_values[index]:
-                    temp.append(line + " - " + str(value))
-            line_out_list = temp
+                    temp.append(line + "#" + str(value))
+            all_value_list = temp
         
-    for index,line in enumerate(line_out_list):
-        print(index, line)    
+    for index,line in enumerate(all_value_list):
+        print(index, line) 
+         
+    line_template = ""
+    line_out = []
+    with open(r"cmd.template", "r") as old_file:
+        for line in old_file:
+            line_template = line
+            
+    line_template = re.sub("#folder#", folder, line_template)
+    with open(r"run_cmd.sh", "w") as new_file:
+        line_out.append("#!/bin/bash\n")
+        line_out.append("source Scripts/%s/Schedule_Run_PRMC.sh &&\n"%(folder))
+        for value_list in all_value_list:
+            line_temp = line_template
+            for k_index,key in enumerate(param_keys):
+                line_temp = re.sub("#"+key+"#", value_list.split("#")[k_index], line_temp)
+            print(line_temp)
+            line_out.append(line_temp+"\n")
+        new_file.writelines(line_out)
+            
+        
+    
+                
             

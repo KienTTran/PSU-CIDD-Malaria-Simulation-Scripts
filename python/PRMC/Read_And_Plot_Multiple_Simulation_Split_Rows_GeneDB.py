@@ -16,7 +16,7 @@ import operator
 import math
 
 plot_keywords = [
-            "gene",
+            "gene"
             ]
 start_year = 2000
 end_year = 2040
@@ -43,8 +43,12 @@ day_interval = 90
 # local_path = "D:/plot/new/1M/4-Genotypes/PRMC"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
+<<<<<<< Updated upstream
 # local_path = "D:/plot/Test2/"
 local_path = "D:/plot/PRMC_4_Genotypes_Exp_6_add_biting_rate/raw"
+=======
+local_path = "D:/plot/Test6/"
+>>>>>>> Stashed changes
 plot_delay = 2
 
 #Plot vars
