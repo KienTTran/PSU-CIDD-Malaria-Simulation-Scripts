@@ -1,0 +1,167 @@
+#!/bin/bash
+#PBS -A mfb9_b_g_sc_default
+#PBS -N submit_jobs
+#PBS -l nodes=1:ppn=1
+#PBS -l pmem=1gb
+#PBS -l walltime=96:00:00
+
+# Get started
+cd $PBS_O_WORKDIR
+sleep 10
+
+TARGET=3900
+SLEEP=300
+USER_NAME=ktt5121
+
+# Count the current jobs, pending or running
+get_job_count(){
+  # The grep is to remove the header, there may be a better way.
+  qstat -u $USER_NAME | grep $USER_NAME | wc -l
+}
+
+input_files=(
+"sim_prmc_pop_500000_beta_0.030_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.030_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.030_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.030_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.030_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.030_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.041_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.076_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.104_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.142_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.194_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.264_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.360_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.492_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.671_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_0.915_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_1.249_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_1.704_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_2.325_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_3.172_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_4.328_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_5.905_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_8.057_ifr_0.200.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.000.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.040.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.080.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.120.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.160.yml",
+"sim_prmc_pop_500000_beta_10.994_ifr_0.200.yml",
+)
+
+# Global job counter
+COUNTER=$(get_job_count)
+
+FROM=0
+TO=9
+
+for i in "${!input_files[@]}";do
+        echo ${input_files[${i}]}
+        for NUMBERS in `seq $FROM $TO`; do
+		echo "$NUMBERS - ${input_files[${i}]}"
+		
+		# Wait until the number of job is under the limit, then submit.
+		while [ $COUNTER -ge $TARGET ]; do
+			sleep $SLEEP
+			COUNTER=$(get_job_count)
+		done
+                qsub -v NUMBER_ARG=$NUMBERS,INPUT_FILE=${input_files[${i}]} job_template.pbs
+		let "COUNTER++"
+        done
+        FROM=$((FROM + 1000))
+        TO=$((TO + 1000))
+done
+
