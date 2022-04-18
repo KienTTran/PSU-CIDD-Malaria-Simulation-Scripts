@@ -44,13 +44,13 @@ if __name__=="__main__":
     
     location_info =  [[0, 0, 0]]
     number_of_locations = len(location_info);
-    data['location_db']['location_info']= location_info;
-    data['location_db']['population_size_by_location'] = params['population'][-1]
+    data['location_db']['location_info'] = location_info;
+    data['location_db']['population_size_by_location'] = [params['population'][-1]]
     data['initial_strategy_id'] = params['therapy_id'][-1]    
     data['starting_date'] = str(params['start_year'][-1])+'/1/1';
     data['ending_date'] = str(params['end_year'][-1])+'/1/1';
     data['start_of_comparison_period']= str(params['start_year'][-1])+'/1/1';
-    data['mosquito_config']['prmc_size'] = params['prmc_size']
+    data['mosquito_config']['prmc_size'] = params['prmc_size'][0]
         
     config_list = []
     for beta in params['beta']:
@@ -58,6 +58,7 @@ if __name__=="__main__":
             new_data = copy.deepcopy(data)
             new_data['location_db']['beta_by_location'] = np.full(number_of_locations, beta).tolist()
             new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, ifr).tolist()
+            new_data['events'][2]['info'][0]['rate'] = ifr
             output_filename = 'generated_inputs/sim_prmc_pop_%s_beta_%.3f_ifr_%.3f.yml'%(str(params['population'][-1]),beta,ifr)
             config_list.append('sim_prmc_pop_%s_beta_%.3f_ifr_%.3f.yml'%(str(params['population'][-1]),beta,ifr))
             output_stream = open(output_filename, 'w');

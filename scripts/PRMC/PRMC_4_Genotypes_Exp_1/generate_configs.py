@@ -68,7 +68,7 @@ if __name__=="__main__":
         with open(r"submit_all_jobs.pbs", "w") as new_file:
             for line in old_file:
                 if '#YML_FILES#' in line:
-                    for c_index,config in enumerate(config_list):
+                    for c_index,config in config_list:
                         if c_index == len(config_list) - 1:
                             new_file.writelines('\"' + config + '\"\n')
                         else:

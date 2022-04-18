@@ -43,12 +43,8 @@ day_interval = 90
 # local_path = "D:/plot/new/1M/4-Genotypes/PRMC"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
 # local_path = "D:/plot/new/1M/4-Genotypes/Parasite"
-<<<<<<< Updated upstream
-# local_path = "D:/plot/Test2/"
-local_path = "D:/plot/PRMC_4_Genotypes_Exp_6_add_biting_rate/raw"
-=======
-local_path = "D:/plot/Test6/"
->>>>>>> Stashed changes
+# local_path = "D:/plot/PRMC_2_Genotypes_Exp_2/raw"
+local_path = "D:/plot/Test1/"
 plot_delay = 2
 
 #Plot vars
