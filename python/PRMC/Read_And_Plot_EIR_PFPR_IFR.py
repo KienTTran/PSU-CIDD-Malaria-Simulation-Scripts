@@ -12,126 +12,78 @@ import numpy as np
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_3\\raw"
 
 configs = [
-"sim_prmc_pop_500000_beta_0.030_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.030_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.030_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.030_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.030_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.030_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.041_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.056_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.076_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.104_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.142_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.194_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.264_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.360_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.492_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.671_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_0.915_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_1.249_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_1.704_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_2.325_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_3.172_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_4.328_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_5.905_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_8.057_ifr_0.200.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.000.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.040.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.080.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.120.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.160.yml",
-"sim_prmc_pop_500000_beta_10.994_ifr_0.200.yml"
+"sim_prmc_pop_500000_beta_0.050_ifr_0.000_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.040_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.080_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.120_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.160_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.200_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.000_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.040_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.080_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.120_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.160_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.200_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.000_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.040_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.080_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.120_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.160_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.200_prmc_size_20.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.000_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.040_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.080_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.120_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.160_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.200_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.000_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.040_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.080_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.120_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.160_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.200_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.000_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.040_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.080_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.120_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.160_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.200_prmc_size_40.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.000_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.040_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.080_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.120_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.160_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.200_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.000_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.040_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.080_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.120_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.160_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.200_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.000_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.040_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.080_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.120_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.160_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.200_prmc_size_80.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.000_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.040_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.080_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.120_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.160_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.050_ifr_0.200_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.000_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.040_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.080_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.120_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.160_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.056_ifr_0.200_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.000_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.040_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.080_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.120_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.160_prmc_size_160.yml",
+"sim_prmc_pop_500000_beta_0.260_ifr_0.200_prmc_size_160.yml"
 ]
 
 n_run = 10
@@ -143,30 +95,33 @@ for index,config in enumerate(configs):
     for run in range(n_run):
         # print(run)
         filename = "monthly_data_%d.txt"%(run + index*1000)
-        # print(filename)
+        print(filename)
         beta = re.findall("\d+\.\d+",config)[0]
         ifr = re.findall("\d+\.\d+",config)[1]
+        size = re.findall("\d+",config)[5]
         # print(beta,ifr)        
         file_path = os.path.join(local_path, filename)
-        try:
-            csv = pd.read_csv(file_path,sep='\t',header=None,index_col=None)
-            row = csv.iloc[120,[10,12] + [*range(22,32)]]            
-            r = row.to_list()
-            r.append(120)
-            r.append(beta)
-            r.append(ifr)
-            data.append(r)
-            row = csv.iloc[360,[10,12] + [*range(22,32)]]
-            r = row.to_list()
-            r.append(360)
-            r.append(beta)
-            r.append(ifr)
-            data.append(r)        
-        except:
-            print(filename + " error reading")
+        # try:
+        csv = pd.read_csv(file_path,sep='\t',header=None,index_col=None)
+        row = csv.iloc[120,[10,12] + [*range(22,32)]]            
+            # r = row.to_list()
+            # r.append(120)
+            # r.append(beta)
+            # r.append(ifr)
+            # r.append(size)
+            # data.append(r)
+        row = csv.iloc[360,[10,12] + [*range(22,32)]]
+            # r = row.to_list()
+            # r.append(360)
+            # r.append(beta)
+            # r.append(ifr)
+            # r.append(size)
+            # data.append(r)        
+        # except Exception as e:
+            # print(filename + " error reading " + str(e))
         
 data_plot = pd.DataFrame(data)
-data_plot.columns = ["eir","pfpr",*["moi"+str(x) for x in range(10)],"month","beta","ifr"]
+# data_plot.columns = ["eir","pfpr",*["moi"+str(x) for x in range(10)],"month","beta","ifr","size"]
 #%%
 sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
 for x in range(1,10):
@@ -192,6 +147,7 @@ import math
 data_120 = data_plot[data_plot.month == 120]   
 betas = data_120.beta.unique()
 ifrs = data_120.ifr.unique()
+sizes = data_120.size.unique()
 
 for ifr in ifrs:
     fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
@@ -224,6 +180,8 @@ import math
 
 data_360 = data_plot[data_plot.month == 360]   
 betas = data_360.beta.unique()
+ifrs = data_360.ifr.unique()
+sizes = data_360.size.unique()
 
 fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
 for ifr in ifrs:
