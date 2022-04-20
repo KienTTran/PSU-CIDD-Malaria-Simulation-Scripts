@@ -94,7 +94,7 @@ fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
 for index,beta in enumerate(betas):
     r = index//5
     c = index % 5
-    data_beta = data_120[((data_120.beta == beta) & (data_120.ifr == ifr))]
+    data_beta = data_120[((data_120.beta == beta))]
     data_moi = data_beta[["moi"+str(x) for x in range(1,10)]]
     data_moi.columns=[*range(1,10)]
     data_moi_melt = pd.melt(data_moi)
@@ -125,7 +125,7 @@ fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
 for index,beta in enumerate(betas):
     r = index//5
     c = index % 5
-    data_beta = data_360[((data_360.beta == beta) & (data_360.ifr == ifr))]
+    data_beta = data_360[((data_360.beta == beta))]
     data_moi = data_beta[["moi"+str(x) for x in range(1,10)]]
     data_moi.columns=[*range(1,10)]
     data_moi_melt = pd.melt(data_moi)

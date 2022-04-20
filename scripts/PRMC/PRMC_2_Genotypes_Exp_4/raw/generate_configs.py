@@ -61,7 +61,7 @@ if __name__=="__main__":
                 new_data['events'][2]['info'][0]['rate'] = ifr
                 new_data['mosquito_config']['prmc_size'] = p_size
                 output_filename = 'generated_inputs/sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size)
-                config_list.append('sim_prmc_pop_%s_beta_%.3f_ifr_%.3f.yml'%(str(params['population'][-1]),beta,ifr))
+                config_list.append('sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size))
                 output_stream = open(output_filename, 'w');
                 yaml.dump(new_data, output_stream); 
                 output_stream.close();
