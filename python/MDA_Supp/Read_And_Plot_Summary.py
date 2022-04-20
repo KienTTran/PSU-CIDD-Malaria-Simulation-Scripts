@@ -443,12 +443,11 @@ for index,config in enumerate(configs):
 data_plot = pd.DataFrame(data)
 data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]
 
-data_plot["eir_log10"] = math.log10(data_plot.eir)
-
 #%%
 import seaborn as sns
 from matplotlib import pyplot as plt
 import math
+
 
 kappas = [0.1,0.5,1.0,2,4]
 data_plot_by_kappa = []
@@ -458,8 +457,17 @@ for kappa in kappas:
     
 fig, axes = plt.subplots(3,3,sharex=True,sharey=True, squeeze=True)
 for index,data_by_kappa in enumerate(data_plot_by_kappa):
-    # data_by_kappa_plot = data_by_kappa[(data_by_kappa.eir > 19) & (data_by_kappa.eir < 20)]
+    data_by_kappa["2to10"] = data_by_kappa.age2/data_by_kappa.age10
     r = index//3
     c = index % 3
-    sns.scatterplot(data=data_by_kappa_plot,x="eir",y="age2",hue="z", ax=axes[r,c])
+    sns.scatterplot(data=data_by_kappa,x="eir",y="2to10",hue="z", palette = "hls", ax=axes[r,c])
+    
+    kappa_percentile = np.percentile(data_by_kappa["kappa"],[25,50,75])
+    
+    if r < 3:
+        axes[r,c].set_xlabel("")
+    if c > 0:
+        axes[r,c].set_ylabel("")
+        
+    axes[r,c].set_title("Kappa: %.2f"%(kappa_percentile[1]))
     
