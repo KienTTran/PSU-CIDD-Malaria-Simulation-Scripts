@@ -441,33 +441,32 @@ for index,config in enumerate(configs):
             print(filename + " error reading " + str(e))
             
 data_plot = pd.DataFrame(data)
-data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]
+data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]  
+#%%
+data_plot.eir = data_plot.eir + 0.1
 
+#%%
+data_plot.to_csv("data_plot.csv",index=False)
 #%%
 import seaborn as sns
 from matplotlib import pyplot as plt
 import math
-
-
-kappas = [0.1,0.5,1.0,2,4]
-data_plot_by_kappa = []
-
-for kappa in kappas:
-    data_plot_by_kappa.append(data_plot[data_plot.kappa == kappa])
-    
-fig, axes = plt.subplots(3,3,sharex=True,sharey=True, squeeze=True)
-for index,data_by_kappa in enumerate(data_plot_by_kappa):
-    data_by_kappa["2to10"] = data_by_kappa.age2/data_by_kappa.age10
-    r = index//3
-    c = index % 3
-    sns.scatterplot(data=data_by_kappa,x="eir",y="2to10",hue="z", palette = "hls", ax=axes[r,c])
-    
-    kappa_percentile = np.percentile(data_by_kappa["kappa"],[25,50,75])
-    
-    if r < 3:
+   
+fig, axes = plt.subplots(2,5,sharex=True,sharey=True, squeeze=True)
+for index,kappa in enumerate(data_plot.kappa.unique()):
+    data_plot_by_kappa = data_plot[data_plot.kappa == kappa]
+    data_plot_by_kappa["2to10"] = data_plot_by_kappa.age2/data_plot_by_kappa.age10
+    r = index//5
+    c = index % 5
+    sns.scatterplot(data=data_plot_by_kappa ,x="eir",y="2to10",hue="z", palette=sns.color_palette("husl",9)[:4], ax=axes[r,c])
+        
+    if r < 5:
         axes[r,c].set_xlabel("")
     if c > 0:
         axes[r,c].set_ylabel("")
         
-    axes[r,c].set_title("Kappa: %.2f"%(kappa_percentile[1]))
+    axes[r,c].set_title("Kappa: %.2f"%(kappa))
+    axes[r,c].set_xscale('log')
+    # axes[r,c].set_xlim([0, 200])
+    
     
