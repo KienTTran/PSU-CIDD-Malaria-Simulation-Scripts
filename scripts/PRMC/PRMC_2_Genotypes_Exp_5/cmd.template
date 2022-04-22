@@ -1,0 +1,1 @@
+runReplicates ktt5121 #folder# #binary# #location# #population# #beta# #therapy_id# #prmc_size# #ifr# #start_year# #end_year# #replicates# #folder#_#beta#_#prmc_size#_#ifr#

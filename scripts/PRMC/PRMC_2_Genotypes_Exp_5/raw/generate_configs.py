@@ -33,23 +33,16 @@ if __name__=="__main__":
     template = (r"cmd.template")   
     all_value_list = []  
     
-    # #Calculate beta log10
+    #Calculate beta log10
     start = math.log10(params['beta'][0])
     stop = math.log10(params['beta'][1])
     step = (stop - start)/params['beta'][-1]
     log10_beta = np.arange(start,stop,step)
     betas = 10**log10_beta
     params['beta'] = betas
-    #kappa
-    kappa_temp = np.arange(params['kappa'][0],params['kappa'][1],params['kappa'][2])
-    params['kappa'] = kappa_temp
-    #z
-    z_temp = np.arange(params['z'][0],params['z'][1],params['z'][2])
-    params['z'] = z_temp
-    
         
     #generate YML
-    stream = open('input_base.yml', 'r');
+    stream = open('sim_prmc.yml', 'r');
     data = yaml.full_load(stream);
     stream.close();
     
@@ -57,18 +50,22 @@ if __name__=="__main__":
     number_of_locations = len(location_info);
     data['location_db']['location_info'] = location_info;
     data['location_db']['population_size_by_location'] = [params['population'][-1]]
+    data['initial_strategy_id'] = params['therapy_id'][-1]    
+    data['starting_date'] = str(params['start_year'][-1])+'/1/1';
+    data['ending_date'] = str(params['end_year'][-1])+'/1/1';
+    data['start_of_comparison_period']= str(params['start_year'][-1])+'/1/1';
         
     config_list = []
-    for z in params['z']:
-        for k in params['kappa']:
-            for beta in params['beta']:
+    for p_size in params['prmc_size']:
+        for beta in params['beta']:
+            for ifr in params['ifr']:
                 new_data = copy.deepcopy(data)
                 new_data['location_db']['beta_by_location'] = np.full(number_of_locations, beta).tolist()
-                new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(z)
-                new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(k)
-                
-                output_filename = config_folder_name + '/sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta)
-                config_list.append('sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta))
+                new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, ifr).tolist()
+                new_data['events'][2]['info'][0]['rate'] = ifr
+                new_data['mosquito_config']['prmc_size'] = p_size
+                output_filename = config_folder_name + '/sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size)
+                config_list.append('sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size))
                 output_stream = open(output_filename, 'w');
                 yaml.dump(new_data, output_stream); 
                 output_stream.close();
@@ -83,7 +80,7 @@ if __name__=="__main__":
                         else:
                             new_file.writelines('\"' + config + '\",\n')
                 elif '#REPLICATES#' in line:
-                    new_file.writelines('TO=' + str(params['replicate'][0] - 1))
+                    new_file.writelines('TO=' + str(params['replicates'][0] - 1))
                 else:
                     new_file.writelines(line)
         

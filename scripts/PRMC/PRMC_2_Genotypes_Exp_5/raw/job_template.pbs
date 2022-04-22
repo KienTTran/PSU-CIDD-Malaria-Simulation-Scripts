@@ -36,7 +36,7 @@
 PROGDIR=../bin
 PROG=$PROGDIR/MaSim
 ###### arguments for the executable
-ARGS="-i $PROGDIR/generated_inputs/${INPUT_FILE} -j ${NUMBER_ARG}"
+ARGS="-i $PROGDIR/${INPUT_FILE} -j ${NUMBER_ARG}"
 echo ""
 #
 ###### change directory to avoid running directly in home, and  to specify output dir
