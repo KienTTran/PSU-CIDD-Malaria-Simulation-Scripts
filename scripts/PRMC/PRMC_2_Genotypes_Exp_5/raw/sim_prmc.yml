@@ -59,8 +59,8 @@ location_db:
   # probability that a symptomatic and infected individual seeks and receives antimalarial treatment
   #if the number of values less than number of locations, the first value will be applied for all locations
   # this is the initial value, the modification values can be change by setting in events node
-  p_treatment_for_less_than_5_by_location: [ 0.15000 ]
-  p_treatment_for_more_than_5_by_location: [ 0.15000 ]
+  p_treatment_for_less_than_5_by_location: [ 0.5000 ]
+  p_treatment_for_more_than_5_by_location: [ 0.5000 ]
 
   #transmission intensity
   #if the number of values less than number of locations, the first value will be applied for all locations

@@ -2,6 +2,7 @@
 import re
 import os 
 from pathlib import Path
+import pandas as pd
 import numpy as np
 import yaml
 import math
@@ -58,34 +59,77 @@ if __name__=="__main__":
     data['location_db']['location_info'] = location_info;
     data['location_db']['population_size_by_location'] = [params['population'][-1]]
         
-    config_list = []
-    for z in params['z']:
-        for k in params['kappa']:
-            for beta in params['beta']:
-                new_data = copy.deepcopy(data)
-                new_data['location_db']['beta_by_location'] = np.full(number_of_locations, beta).tolist()
-                new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(z)
-                new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(k)
-                
-                output_filename = config_folder_name + '/sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta)
-                config_list.append('sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta))
-                output_stream = open(output_filename, 'w');
-                yaml.dump(new_data, output_stream); 
-                output_stream.close();
+    config_df = pd.DataFrame()
+    
+    for index,key in enumerate(params):
+        print(index,key,params[key])
+        if len(all_value_list) == 0:
+            for value in params[key]:
+                all_value_list.append(str(value))
+        else:
+            temp = []
+            for line in all_value_list:
+                for value in params[key]:
+                    temp.append(line + "#" + str(value))
+            all_value_list = temp
             
-    with open(r"submit_all_jobs.template", "r") as old_file:
-        with open(r"submit_all_jobs.pbs", "w") as new_file:
-            for line in old_file:
-                if '#YML_FILES#' in line:
-                    for c_index,config in enumerate(config_list):
-                        if c_index == len(config_list) - 1:
-                            new_file.writelines('\"' + config + '\"\n')
-                        else:
-                            new_file.writelines('\"' + config + '\",\n')
-                elif '#REPLICATES#' in line:
-                    new_file.writelines('TO=' + str(params['replicate'][0] - 1))
-                else:
-                    new_file.writelines(line)
+    # for index,line in enumerate(all_value_list):
+        # print(index, line)  
+
+    config_list = []
+    for index,line in enumerate(all_value_list):
+        config_list.append(line.split("#"))
+        
+        
+    config_df = pd.DataFrame(config_list)
+    config_df.columns = ["pop_size","beta","z","kappa"]
+    config_df.to_csv("configs.csv",index=True,index_label="Index")
+    
+    df = config_df.reset_index()  # make sure indexes pair with number of rows
+    for index, row in df.iterrows():
+        new_data = copy.deepcopy(data)
+        new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
+        new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(row.z)
+        new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(row.kappa)
+        
+        output_filename = config_folder_name + '/%d.yml'%(index)
+        output_stream = open(output_filename, 'w');
+        yaml.dump(new_data, output_stream); 
+        output_stream.close();  
+    
+    # config_df['pop_size'] = params['population'][-1]
+    # for z in params['z']:
+    #     for k in params['kappa']:
+    #         for beta in params['beta']:
+                
+    # config_list = []
+    # for z in params['z']:
+    #     for k in params['kappa']:
+    #         for beta in params['beta']:
+    #             new_data = copy.deepcopy(data)
+    #             new_data['location_db']['beta_by_location'] = np.full(number_of_locations, beta).tolist()
+    #             new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(z)
+    #             new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(k)
+                
+    #             output_filename = config_folder_name + '/sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta)
+    #             config_list.append('sim_prmc_pop_%s_kappa_%.2f_z_%.2f_beta_%.3f.yml'%(str(params['population'][-1]),k,z,beta))
+    #             output_stream = open(output_filename, 'w');
+    #             yaml.dump(new_data, output_stream); 
+    #             output_stream.close();  
+            
+    # with open(r"submit_all_jobs.template", "r") as old_file:
+    #     with open(r"submit_all_jobs.pbs", "w") as new_file:
+    #         for line in old_file:
+    #             if '#YML_FILES#' in line:
+    #                 for c_index,config in enumerate(config_list):
+    #                     if c_index == len(config_list) - 1:
+    #                         new_file.writelines('\"' + config + '\"\n')
+    #                     else:
+    #                         new_file.writelines('\"' + config + '\",\n')
+    #             elif '#REPLICATES#' in line:
+    #                 new_file.writelines('TO=' + str(params['replicate'][0] - 1))
+    #             else:
+    #                 new_file.writelines(line)
         
     # #Write to cmd.sh (for Rob queue job version)
     # for index,key in enumerate(params):
