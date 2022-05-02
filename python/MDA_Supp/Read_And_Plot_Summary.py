@@ -43,11 +43,7 @@ for index,config in config_df.iterrows():
 data_plot = pd.DataFrame(data)
 data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]  
 data_plot.to_csv("data.csv",index=False)
-#%%
-#data_plot.eir = data_plot.eir + 0.1
 
-#%%
-data_plot.to_csv("data_plot.csv",index=False)
 #%%
 import seaborn as sns
 from matplotlib import pyplot as plt
