@@ -722,6 +722,12 @@ events:
         day: 2000/1/1
         rate: 0.0
 
+  - name: change_interrupted_feeding_rate
+    info:
+      - location: 0
+        day: 2010/1/1
+        rate: 0.19
+
 #  - name: turn_on_mutation
 #    info:
 #      - day: 2010/1/1

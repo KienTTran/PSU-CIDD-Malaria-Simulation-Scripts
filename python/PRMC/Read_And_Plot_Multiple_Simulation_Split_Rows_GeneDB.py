@@ -148,7 +148,9 @@ for file_db,file_freq in zip(rep_file_db,rep_file_freq):
     try:
         rep_data_gene_db = pd.read_csv(file_db, sep='\t', header=None,index_col=None)
         rep_data_gene_db.columns = ["id","aa_sequence"]   
-        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None, skiprows=1)
+        genotype_names = rep_data_gene_db.aa_sequence
+        genotype_names = pd.concat([genotype_names, pd.Series(["temp"])], ignore_index=True)
+        rep_data_gene_freq = pd.read_csv(file_freq, sep='\t', header=None, names = genotype_names, index_col=None)
         rep_data_gene_freq.dropna(how='all', axis=1, inplace=True)
         rep_data_gene_freq.fillna(0)
         rep_data_gene_freq.columns = rep_data_gene_db["aa_sequence"]

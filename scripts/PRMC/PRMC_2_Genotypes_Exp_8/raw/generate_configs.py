@@ -74,9 +74,9 @@ if __name__=="__main__":
         new_data = copy.deepcopy(data)
         new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
         new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
-        new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
+        new_data['mosquito_config']['prmc_size'] = (float)(row.prmc_size)
         
-        output_filename = config_folder_name + '/%d.yml'%(index)
+        output_filename = config_folder_name + '/%d.yml'%(index + 1)
         output_stream = open(output_filename, 'w');
         yaml.dump(new_data, output_stream); 
         output_stream.close();  
