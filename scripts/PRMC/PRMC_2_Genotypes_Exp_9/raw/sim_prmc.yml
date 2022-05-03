@@ -716,11 +716,21 @@ events:
     info:
       - day: 2000/1/1
 
+  - name: change_within_host_induced_recombination
+    info:
+      day: 2000/1/1
+      value: false
+      
+  - name: change_within_host_induced_recombination
+    info:
+      day: 2010/1/1
+      value: true
+                
   - name: change_interrupted_feeding_rate
     info:
       - location: 0
         day: 2000/1/1
-        rate: 0.0
+        rate: 0.0        
                 
   - name: change_interrupted_feeding_rate
     info:
@@ -835,7 +845,7 @@ sd_prob_individual_present_at_mda: [ 0.3, 0.3, 0.3 ]
 
 #Mosquito
 mosquito_config:
-  interrupted_feeding_rate: [ 0.19 ]
+  interrupted_feeding_rate: [ 0.0 ]
   prmc_size: 800
   
-within_host_induced_free_recombination: false
+within_host_induced_free_recombination: true
