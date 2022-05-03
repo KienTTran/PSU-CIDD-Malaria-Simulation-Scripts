@@ -70,16 +70,17 @@ if __name__=="__main__":
     config_df.to_csv("configs.csv",index=True,index_label="Index")
     
     df = config_df.reset_index()  # make sure indexes pair with number of rows
-    for index, row in df.iterrows():            
-        new_data = copy.deepcopy(data)
-        new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
-        new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
-        new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
-        
-        output_filename = config_folder_name + '/%d.yml'%(index)
-        output_stream = open(output_filename, 'w');
-        yaml.dump(new_data, output_stream); 
-        output_stream.close();  
+    for index, row in df.iterrows():    
+        for run in range(params['replicates'][-1]):
+            new_data = copy.deepcopy(data)
+            new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
+            new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
+            new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
+            
+            output_filename = config_folder_name + '/%d.yml'%(index*params['replicates'][-1] + run)
+            output_stream = open(output_filename, 'w');
+            yaml.dump(new_data, output_stream); 
+            output_stream.close();  
                 
     # config_list = []
     # for p_size in params['prmc_size']:

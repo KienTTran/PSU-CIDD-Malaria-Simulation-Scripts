@@ -23,7 +23,7 @@ get_job_count(){
 COUNTER=$(get_job_count)
 
 FROM=0
-TO=10
+TO=399
 
 for NUMBERS in `seq $FROM $TO`; do
 	# Wait until the number of job is under the limit, then submit.
