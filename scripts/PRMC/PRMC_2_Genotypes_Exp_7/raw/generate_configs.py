@@ -35,12 +35,12 @@ if __name__=="__main__":
     all_value_list = []  
     
     #Calculate beta log10
-    start = math.log10(params['beta'][0])
-    stop = math.log10(params['beta'][1])
-    step = (stop - start)/params['beta'][-1]
-    log10_beta = np.arange(start,stop,step)
-    betas = 10**log10_beta
-    params['beta'] = betas
+    # start = math.log10(params['beta'][0])
+    # stop = math.log10(params['beta'][1])
+    # step = (stop - start)/params['beta'][-1]
+    # log10_beta = np.arange(start,stop,step)
+    # betas = 10**log10_beta
+    # params['beta'] = betas
         
     #generate YML
     stream = open('sim_prmc.yml', 'r');
@@ -54,14 +54,13 @@ if __name__=="__main__":
     data['initial_strategy_id'] = params['therapy_id'][-1]    
     data['starting_date'] = str(params['start_year'][-1])+'/1/1';
     data['ending_date'] = str(params['end_year'][-1])+'/1/1';
-    data['start_of_comparison_period']= str(params['start_year'][-1])+'/1/1';
-        
+    data['start_of_comparison_period']= str(params['start_year'][-1])+'/1/1';        
     
     config_df = pd.DataFrame()
     config = []
     for beta in params['beta']:
         for p_size in params['prmc_size']:
-            for ifr in params['ifr']:
+            for ifr in params['ifr']:       
                 config.append([beta, p_size, ifr])
     
     config_df = pd.DataFrame(config)
@@ -70,17 +69,17 @@ if __name__=="__main__":
     config_df.to_csv("configs.csv",index=True,index_label="Index")
     
     df = config_df.reset_index()  # make sure indexes pair with number of rows
-    for index, row in df.iterrows():    
-        for run in range(params['replicates'][-1]):
-            new_data = copy.deepcopy(data)
-            new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
-            new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
-            new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
-            
-            output_filename = config_folder_name + '/%d.yml'%(index*params['replicates'][-1] + run)
-            output_stream = open(output_filename, 'w');
-            yaml.dump(new_data, output_stream); 
-            output_stream.close();  
+    for index, row in df.iterrows():
+        new_data = copy.deepcopy(data)
+        new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
+        new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
+        new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
+        new_data['events'][2]['info'][0]['rate'] = (float)(row.ifr)
+        
+        output_filename = config_folder_name + '/%d.yml'%(index)
+        output_stream = open(output_filename, 'w');
+        yaml.dump(new_data, output_stream); 
+        output_stream.close();  
                 
     # config_list = []
     # for p_size in params['prmc_size']:

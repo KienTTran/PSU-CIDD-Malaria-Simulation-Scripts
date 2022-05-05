@@ -19,27 +19,30 @@ get_job_count(){
   qstat -u $USER_NAME | grep $USER_NAME | wc -l
 }
 
+input_files=(
+#YML_FILES#
+)
+
 # Global job counter
 COUNTER=$(get_job_count)
 
 FROM=0
-TO=119
-REP=10
+TO=#REPLICATES#
 
-for i in `seq $FROM $TO`;do
-
-	N_FROM=$((i*1000))
-	N_TO=$((i*1000 + REP-1))
-	
-	for NUMBERS in `seq $N_FROM $N_TO`; do
-		echo "$NUMBERS - $i.yml"
-	
+for i in "${!input_files[@]}";do
+        echo ${input_files[${i}]}
+        for NUMBERS in `seq $FROM $TO`; do
+		echo "$NUMBERS - ${input_files[${i}]}"
+		
 		# Wait until the number of job is under the limit, then submit.
 		while [ $COUNTER -ge $TARGET ]; do
 			sleep $SLEEP
 			COUNTER=$(get_job_count)
 		done
-		qsub -v NUMBER_ARG=$NUMBERS,INPUT_FILE=$i.yml job_template.pbs
+                qsub -v NUMBER_ARG=$NUMBERS,INPUT_FILE=${input_files[${i}]} job_template.pbs
 		let "COUNTER++"
-	done
+        done
+        FROM=$((FROM + 1000))
+        TO=$((TO + 1000))
 done
+

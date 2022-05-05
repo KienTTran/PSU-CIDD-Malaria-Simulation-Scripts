@@ -74,6 +74,7 @@ if __name__=="__main__":
         new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
         new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, row.ifr).tolist()
         new_data['mosquito_config']['prmc_size'] = (int)(row.prmc_size)
+        new_data['events'][4]['info'][0]['rate'] = (float)(row.ifr)
         
         output_filename = config_folder_name + '/%d.yml'%(index)
         output_stream = open(output_filename, 'w');
