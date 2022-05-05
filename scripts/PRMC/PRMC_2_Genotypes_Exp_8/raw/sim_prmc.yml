@@ -59,8 +59,8 @@ location_db:
   # probability that a symptomatic and infected individual seeks and receives antimalarial treatment
   #if the number of values less than number of locations, the first value will be applied for all locations
   # this is the initial value, the modification values can be change by setting in events node
-  p_treatment_for_less_than_5_by_location: [ 0.5000 ]
-  p_treatment_for_more_than_5_by_location: [ 0.5000 ]
+  p_treatment_for_less_than_5_by_location: [ 0.0000 ]
+  p_treatment_for_more_than_5_by_location: [ 0.0000 ]
 
   #transmission intensity
   #if the number of values less than number of locations, the first value will be applied for all locations
@@ -716,21 +716,16 @@ events:
     info:
       - day: 2000/1/1
 
-  - name: change_within_host_induced_recombination
-    info:
-      day: 2000/1/1
-      value: false
-      
-  - name: change_within_host_induced_recombination
-    info:
-      day: 2010/1/1
-      value: true
-                
   - name: change_interrupted_feeding_rate
     info:
       - location: 0
         day: 2000/1/1
         rate: 0.0
+        
+  - name: change_within_host_induced_recombination
+    info:
+        day: 2010/1/1
+        value: true
 
 #  - name: turn_on_mutation
 #    info:
@@ -839,7 +834,7 @@ sd_prob_individual_present_at_mda: [ 0.3, 0.3, 0.3 ]
 
 #Mosquito
 mosquito_config:
-  interrupted_feeding_rate: [ 0.0 ]
+  interrupted_feeding_rate: [ 0.19 ]
   prmc_size: 800
   
-within_host_induced_free_recombination: true
+within_host_induced_free_recombination: false
