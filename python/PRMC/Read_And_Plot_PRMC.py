@@ -11,7 +11,9 @@ import pandas as pd
 import numpy as np
 import math
 
-local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_9\\"
+exp_number = 8
+
+local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
 local_path_bin = local_path + "\\bin"
 
@@ -59,9 +61,14 @@ for index,config in config_df.iterrows():
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
 #%%
 
+data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + ".csv",index=False)
+#%%
+
 import seaborn as sns
 
-sns.relplot(data = data_plot, 
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + ".csv")
+
+plot = sns.relplot(data = data_plot, 
             x = 'month',
             y = 'ld',
             col = 'prmc_size',
@@ -69,9 +76,12 @@ sns.relplot(data = data_plot,
             hue = 'ifr',
             style = "ifr",
             kind = "line",
-            ci = 'sd'
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:1]
             )
 
+#%%
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + ".png", dpi=300)
 
 
             
