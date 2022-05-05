@@ -11,9 +11,11 @@ import pandas as pd
 import numpy as np
 import math
 
-local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_9\\raw"
+local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_9\\"
+local_path_raw = local_path + "\\raw"
+local_path_bin = local_path + "\\bin"
 
-config_df = pd.read_csv(local_path + '\configs.csv',index_col=False)
+config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
 n_run = 10
@@ -25,13 +27,13 @@ for index,config in config_df.iterrows():
         # print(run)
         filename_db = "gene_db_%d.txt"%(index*1000 + run)
         filename_freq = "gene_freq_%d.txt"%(index*1000 + run)
-        print(filename_db) 
+        # print(filename_db) 
         beta = config.beta 
         prmc_size = config.prmc_size      
         ifr = config.ifr
         # print(beta,ifr)        
-        file_path_db = os.path.join(local_path, filename_db)
-        file_path_freq = os.path.join(local_path, filename_freq)
+        file_path_db = os.path.join(local_path_raw, filename_db)
+        file_path_freq = os.path.join(local_path_raw, filename_freq)
         try:
             csv_db = pd.read_csv(file_path_db, sep='\t', header=None,index_col=None)
             csv_db.columns = ["id","aa_sequence"]   
