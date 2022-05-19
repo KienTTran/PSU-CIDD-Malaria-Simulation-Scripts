@@ -23,7 +23,7 @@ get_job_count(){
 COUNTER=$(get_job_count)
 
 FROM=0
-TO=119
+TO=143
 REP=10
 
 for i in `seq $FROM $TO`;do

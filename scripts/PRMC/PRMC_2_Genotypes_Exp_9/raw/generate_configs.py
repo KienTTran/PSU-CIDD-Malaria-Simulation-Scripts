@@ -81,34 +81,13 @@ if __name__=="__main__":
         yaml.dump(new_data, output_stream); 
         output_stream.close();  
                 
-    # config_list = []
-    # for p_size in params['prmc_size']:
-    #     for beta in params['beta']:
-    #         for ifr in params['ifr']:
-    #             new_data = copy.deepcopy(data)
-    #             new_data['location_db']['beta_by_location'] = np.full(number_of_locations, beta).tolist()
-    #             new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, ifr).tolist()
-    #             new_data['events'][2]['info'][0]['rate'] = ifr
-    #             new_data['mosquito_config']['prmc_size'] = p_size
-    #             output_filename = config_folder_name + '/sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size)
-    #             config_list.append('sim_prmc_pop_%s_beta_%.3f_ifr_%.3f_prmc_size_%d.yml'%(str(params['population'][-1]),beta,ifr,p_size))
-    #             output_stream = open(output_filename, 'w');
-    #             yaml.dump(new_data, output_stream); 
-    #             output_stream.close();
-            
-    # with open(r"submit_all_jobs.template", "r") as old_file:
-    #     with open(r"submit_all_jobs.pbs", "w") as new_file:
-    #         for line in old_file:
-    #             if '#YML_FILES#' in line:
-    #                 for c_index,config in enumerate(config_list):
-    #                     if c_index == len(config_list) - 1:
-    #                         new_file.writelines('\"' + config + '\"\n')
-    #                     else:
-    #                         new_file.writelines('\"' + config + '\",\n')
-    #             elif '#REPLICATES#' in line:
-    #                 new_file.writelines('TO=' + str(params['replicates'][0] - 1))
-    #             else:
-    #                 new_file.writelines(line)
+    with open(r"submit_all_jobs.template", "r") as old_file:
+        with open(r"submit_all_jobs.pbs", "w") as new_file:
+            for line in old_file:
+                if '#REPLICATES#' in line:
+                    new_file.writelines('TO=' + str(len(config_df) - 1) + "\n")
+                else:
+                    new_file.writelines(line)
         
     # #Write to cmd.sh (for Rob queue job version)
     # for index,key in enumerate(params):
