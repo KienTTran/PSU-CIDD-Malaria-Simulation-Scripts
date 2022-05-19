@@ -9,44 +9,27 @@ import re
 import pandas as pd
 import numpy as np
 
-local_path = "D:\\plot\\\PRMC_4_Genotypes_Exp_6_add_biting_rate\\raw"
+exp_number = 10
 
-configs = [
-"sim_prmc_pop_500000_beta_0.030.yml",
-"sim_prmc_pop_500000_beta_0.041.yml",
-"sim_prmc_pop_500000_beta_0.056.yml",
-"sim_prmc_pop_500000_beta_0.076.yml",
-"sim_prmc_pop_500000_beta_0.104.yml",
-"sim_prmc_pop_500000_beta_0.142.yml",
-"sim_prmc_pop_500000_beta_0.194.yml",
-"sim_prmc_pop_500000_beta_0.264.yml",
-"sim_prmc_pop_500000_beta_0.360.yml",
-"sim_prmc_pop_500000_beta_0.492.yml",
-"sim_prmc_pop_500000_beta_0.671.yml",
-"sim_prmc_pop_500000_beta_0.915.yml",
-"sim_prmc_pop_500000_beta_1.249.yml",
-"sim_prmc_pop_500000_beta_1.704.yml",
-"sim_prmc_pop_500000_beta_2.325.yml",
-"sim_prmc_pop_500000_beta_3.172.yml",
-"sim_prmc_pop_500000_beta_4.328.yml",
-"sim_prmc_pop_500000_beta_5.905.yml",
-"sim_prmc_pop_500000_beta_8.057.yml",
-"sim_prmc_pop_500000_beta_10.994.yml"
-]
+local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
+local_path_raw = local_path + "\\raw"
+local_path_bin = local_path + "\\bin"
+
+config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
+config_df.set_index('Index', inplace=True)
 
 n_run = 10
 
 data = []
 
-for index,config in enumerate(configs):
+for index,config in config_df.iterrows():
     # print(index,config)
     for run in range(n_run):
         # print(run)
         filename = "monthly_data_%d.txt"%(run + index*1000)
         # print(filename)
-        beta = re.findall("\d+\.\d+",config)[0]
-        # print(beta,ifr)        
-        file_path = os.path.join(local_path, filename)
+        beta = config.beta 
+        file_path = os.path.join(local_path_raw, filename)
         try:
             csv = pd.read_csv(file_path,sep='\t',header=None,index_col=None)
             row = csv.iloc[120,[10,12] + [*range(22,32)]]            
@@ -64,6 +47,10 @@ for index,config in enumerate(configs):
         
 data_plot = pd.DataFrame(data)
 data_plot.columns = ["eir","pfpr",*["moi"+str(x) for x in range(10)],"month","beta"]
+
+#%%
+data_plot.to_csv(local_path + "data_plot_EIR_PfPR" + str(exp_number) + ".csv",index=False)  
+
 #%%
 sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
 for x in range(1,10):
@@ -77,7 +64,20 @@ from matplotlib import pyplot as plt
 plt.close("all")   
 plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr", hue="month") 
 plot.set(xscale="log")
+plot.set(xlim=(10**-3,10**3),ylim=(0,100))
+plot.set_yticks(range(0,100,10))
+# plot.set(xlim=(0, 10))
 
+#%%
+import seaborn as sns
+from matplotlib import pyplot as plt
+
+plt.close("all")   
+plot = sns.scatterplot(data=data_plot, x="beta", y="eir", hue="month") 
+plot.set(yscale="log")
+plot.set(xlim=(0,3),ylim=(10**-3,10**3))
+# plot.set_yticks(range(0,100,10))
+# plot.set(xlim=(0, 10))
 
 #%%
 import seaborn as sns
@@ -88,7 +88,6 @@ import math
 
 data_120 = data_plot[data_plot.month == 120]   
 betas = data_120.beta.unique()
-ifrs = data_120.ifr.unique()
 
 fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
 for index,beta in enumerate(betas):
