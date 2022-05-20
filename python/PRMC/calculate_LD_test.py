@@ -12,7 +12,7 @@ import numpy as np
 import math
 import itertools
 
-exp_number = 11
+exp_number = 99
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"

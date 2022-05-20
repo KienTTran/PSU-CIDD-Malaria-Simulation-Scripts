@@ -70,7 +70,12 @@ plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr", hue="month")
 plot.set(xscale="log")
 plot.set(xlim=(10**-3,10**3),ylim=(0,100))
 plot.set_yticks(range(0,100,10))
+plot.set_xlabel('EIR')
+plot.set_ylabel('% PfPR')
 # plot.set(xlim=(0, 10))
+
+#%%
+plot.figure.savefig(local_path + "Exp_" + str(exp_number) + "_EIR_PfPR_Log.png", dpi=300)
 
 #%%
 import seaborn as sns
@@ -79,9 +84,13 @@ from matplotlib import pyplot as plt
 plt.close("all")   
 plot = sns.scatterplot(data=data_plot, x="beta", y="eir", hue="month") 
 plot.set(yscale="log")
-plot.set(xlim=(0,3),ylim=(10**-3,10**3))
+plot.set(xlim=(0,3),ylim=(10**0,10**3))
+plot.set_xlabel('EIR')
+plot.set_ylabel('% PfPR')
 # plot.set_yticks(range(0,100,10))
 # plot.set(xlim=(0, 10))
+#%%
+plot.figure.savefig(local_path + "Exp_" + str(exp_number) + "_EIR_PfPR_Linear.png", dpi=300)
 
 #%%
 import seaborn as sns
