@@ -12,8 +12,6 @@ import numpy as np
 import math
 import itertools
 
-#%%
-
 exp_number = 10
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
@@ -85,7 +83,7 @@ for index,pair in enumerate(zip(*data_plot.columns)):
 for allele_pair in mutated_allele_pairs:
     for allele in allele_pair:
         data_plot["Allele " + allele] = 0
-        data_plot["X " + allele] = 0
+        data_plot["X_" + allele] = 0
         
 for column in data_columns:
     for index,pos in enumerate(mutated_loci):
