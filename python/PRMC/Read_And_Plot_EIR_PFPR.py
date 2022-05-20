@@ -18,6 +18,7 @@ local_path_bin = local_path + "\\bin"
 config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
+#%%
 n_run = 10
 
 data = []
@@ -50,6 +51,9 @@ data_plot.columns = ["eir","pfpr",*["moi"+str(x) for x in range(10)],"month","be
 
 #%%
 data_plot.to_csv(local_path + "data_plot_EIR_PfPR" + str(exp_number) + ".csv",index=False)  
+
+#%%
+data_plot = pd.read_csv(local_path + "data_plot_EIR_PfPR" + str(exp_number) + ".csv") 
 
 #%%
 sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
