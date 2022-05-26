@@ -41,5 +41,5 @@ for col_i, col in enumerate(gene_freq_data.columns):
 plt.xlabel('Years')
 plt.ylabel('Freqency')
 plt.xticks(range(0,n_years*12+1,12*5), range(0,n_years+1,5))
-plt.legend(ncol=1, loc='upper center', bbox_to_anchor=(0.5, -0.2))
+plt.legend(title="genotypes", ncol=1, loc='center left')
 

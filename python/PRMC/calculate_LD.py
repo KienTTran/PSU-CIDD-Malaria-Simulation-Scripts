@@ -11,8 +11,16 @@ import pandas as pd
 import numpy as np
 import math
 import itertools
+import os
+import re
+import pandas as pd
+import numpy as np
+import math
+import seaborn as sns
+import random
+from itertools import combinations
 
-exp_number = 10
+exp_number = 11
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -21,9 +29,9 @@ local_path_bin = local_path + "\\bin"
 config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
-#%%
 n_run = 1
 
+#%%
 data = []
 
 for index,config in config_df.iterrows():
@@ -60,34 +68,57 @@ data_plot.to_csv(local_path + "data_plot_exp_140" + str(exp_number) + ".csv",ind
 
 data_plot = pd.read_csv(local_path + "data_plot_exp_140" + str(exp_number) + ".csv")
 
-initial_genotypes = [
-                        "||||YY1||KTHFI,x||||||FNMYRIPRPC|1", 
-                        "||||YY1||TTHFI,x||||||FNMYRIPRPY|1"
-                     ]
-X_i = []
-mutated_allele_pairs = []
-mutated_loci = []
+mask = "||||111||10000,0||||||0000000001|1"
+masked_loci = []
 
-data_columns = data_plot.columns
+all_genotypes = data_plot.columns
+initial_genotypes = all_genotypes[0:2]
+
+for index,locus in enumerate(mask):
+    if locus == '1':
+        masked_loci.append(index)
+
+loci_3 = random.sample(masked_loci,3)
+loci_2 = list(combinations(loci_3, 2))  
+allele_map = {}
+allele_freq_single = []
+allele_freq_pair = []
+    
+observe_genotype = initial_genotypes[0]
+
+#p_i, p_j, p_k
+for locus,locus_pair in zip(loci_3,loci_2):
+    allele_map[locus] = observe_genotype[locus]
+    data_plot[str(locus) + '-' + observe_genotype[locus]] = 0
+
+#Psi_ij, Psi_jk, Psi_ik   
+for locus,locus_pair in zip(loci_3,loci_2):
+    pair = str(locus_pair[0]) + '-' + observe_genotype[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + observe_genotype[locus_pair[1]]
+    data_plot[pair] = 0
+ 
+#Psi_ijk
+pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
+data_plot[pair] = 0
+
+#Allele freq
+for genotype in all_genotypes:
+    #p_i, p_j, p_k
+    for locus in loci_3:
+        if genotype[locus] == allele_map[locus]:
+            data_plot[str(locus) + '-' + allele_map[locus]] += data_plot[genotype];
+    #Psi_ij, Psi_jk, Psi_ik
+    for locus_pair in loci_2:
+        if genotype[locus_pair[0]] == allele_map[locus_pair[0]] and genotype[locus_pair[1]] == allele_map[locus_pair[1]]:
+            pair = str(locus_pair[0]) + '-' + allele_map[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + allele_map[locus_pair[1]]
+            data_plot[pair] += data_plot[genotype]    
+    #Psi_ijk
+    if genotype[loci_3[0]] == allele_map[loci_3[0]] and genotype[loci_3[1]] == allele_map[loci_3[1]] and genotype[loci_3[2]] == allele_map[loci_3[2]]:
+        pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
+        data_plot[pair] += data_plot[genotype];
+        
+
+#%%
             
-for index,pair in enumerate(zip(*data_plot.columns)):
-    mutated_allele = []
-    for elem in pair:
-        if elem not in mutated_allele:
-            mutated_allele.append(elem)
-    if len(mutated_allele) > 1:
-        mutated_allele_pairs.append(mutated_allele)
-        mutated_loci.append(index)
-        
-# Calculate Allele freq     
-for allele_pair in mutated_allele_pairs:
-    for allele in allele_pair:
-        data_plot["Allele " + allele] = 0
-        data_plot["X_" + allele] = 0
-        
-for column in data_columns:
-    for index,pos in enumerate(mutated_loci):
-        if column[pos] in mutated_allele_pairs[index]:
-            data_plot["Allele " + column[pos]] += data_plot[column]
+
         
         
