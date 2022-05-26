@@ -9,7 +9,7 @@ import re
 import pandas as pd
 import numpy as np
 
-exp_number = 10
+exp_number = 11
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"

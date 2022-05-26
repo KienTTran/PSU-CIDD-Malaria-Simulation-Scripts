@@ -96,23 +96,22 @@ data_plot_2 = pd.concat(data,ignore_index=True, axis = 0)
 #             data_plot["Allele " + column[pos]] += data_plot[column]
          
 #%%
-if len(csv_db.aa_sequence) >= 4:
-    data_plot_2["LD1"] = data_plot.iloc[:,0]*data_plot.iloc[:,1] - data_plot.iloc[:,2]*data_plot.iloc[:,3]    
-    data_plot_2["LD2"] = data_plot_2.iloc[:,4:8].mean(axis=1)
+if len(csv_db.aa_sequence) == 4:
+    LD_1 = data_plot.iloc[:,0]*data_plot.iloc[:,1] - data_plot.iloc[:,2]*data_plot.iloc[:,3] 
 else:
-    data_plot_2["LD1"] = data_plot.iloc[:,0]*data_plot.iloc[:,1]    
-    data_plot_2["LD2"] = data_plot_2.iloc[:,2:4].mean(axis=1)
+    LD_1 = data_plot.iloc[:,0]*data_plot.iloc[:,1] 
+LD_2 = data_plot_2.mean(axis=1)
     
-norm = np.linalg.norm(data_plot_2["LD2"])
-data_plot_2["LD2"] = data_plot_2["LD2"]/norm
+norm = np.linalg.norm(LD_2)
+LD_2 = LD_2/norm
 
 #%%
 import seaborn as sns
 from matplotlib import pyplot as plt
 
 # plt.close("all")   
-plot = sns.lineplot(data=data_plot_2, x=data_plot_2.index, y="LD1") 
-plot = sns.lineplot(data=data_plot_2, x=data_plot_2.index, y="LD2")
+# plot = sns.lineplot(data=data_plot_2, x=data_plot_2.index, y="LD") 
+plot = sns.lineplot(data=data_plot_2, x=data_plot_2.index, y=LD_2)
 plot.set_xlabel('Month')
 plot.set_ylabel('LD')
 # plot.set_yticks(range(0,100,10))

@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr  5 11:04:48 2022
+Created on Tue May  3 11:07:17 2022
 
 @author: kient
 """
+
 import os
 import re
 import pandas as pd
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
-exp_number = 10
+a4_dims = (11.7, 8.27)
+
+exp_number = 11
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -19,19 +23,19 @@ local_path_bin = local_path + "\\bin"
 config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
-n_run = 10
+#%%
+n_run = 1
 
 data = []
 
-for index,config in config_df.iterrows():
+for index,config in config_df.iterrows(): 
     for run in range(n_run):
         # print(run)
         filename_db = "gene_db_%d.txt"%(index*1000 + run)
         filename_freq = "gene_freq_%d.txt"%(index*1000 + run)
-        # print(filename_db) 
+        # print(filename) 
         beta = config.beta 
         prmc_size = config.prmc_size      
-        ifr = config.ifr   
         ifr = config.ifr
         # print(beta,ifr)        
         file_path_db = os.path.join(local_path_raw, filename_db)
@@ -48,94 +52,54 @@ for index,config in config_df.iterrows():
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
-            csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]]
-            
-            if len(csv_db.aa_sequence) == 4:
-                csv_freq['ld'] = csv_freq['ld'] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
-            
+            csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
             data.append(csv_freq)            
         except Exception as e:
-            raise
-            print(file_path_freq + " error reading " + str(e))
+            print(" error reading " + str(e))
         
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
-#%%
-sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
-for x in range(1,10):
-    data_plot["moi"+str(x)] = data_plot["moi"+str(x)]/sum_moi   
-
 
 #%%
-import seaborn as sns
-from matplotlib import pyplot as plt
-
-plt.close("all")   
-plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr", hue="month") 
-plot.set(xscale="log")
-
+data_plot.to_csv(local_path + "data_plot_res_freq" + str(exp_number) + ".csv",index=False)  
 
 #%%
-import seaborn as sns
-from matplotlib import pyplot as plt
-import math
+data_plot = pd.read_csv(local_path + "data_plot_res_freq" + str(exp_number) + ".csv") 
 
-# plt.close("all")
-
-data_120 = data_plot[data_plot.month == 120]   
-betas = data_120.beta.unique()
-ifrs = data_120.ifr.unique()
-
-fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
-for index,beta in enumerate(betas):
-    r = index//5
-    c = index % 5
-    data_beta = data_120[((data_120.beta == beta))]
-    data_moi = data_beta[["moi"+str(x) for x in range(1,10)]]
-    data_moi.columns=[*range(1,10)]
-    data_moi_melt = pd.melt(data_moi)
-    data_moi_melt.columns = ["MOI","freq"]
-    sns.boxplot(data=data_moi_melt,x="MOI",y="freq",ax=axes[r,c])
-    
-    eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
-    pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
-    
-    if r < 3:
-        axes[r,c].set_xlabel("")
-    if c > 0:
-        axes[r,c].set_ylabel("")
-    
-    axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))
-    
 #%%
-import seaborn as sns
-from matplotlib import pyplot as plt
-import math
 
-# plt.close("all")
+data_genotypes = data_plot.columns[0:8]
 
-data_360 = data_plot[data_plot.month == 360]   
-betas = data_360.beta.unique()
+data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld'], var_name='cols', value_name='vals')
 
-fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
-for index,beta in enumerate(betas):
-    r = index//5
-    c = index % 5
-    data_beta = data_360[((data_360.beta == beta))]
-    data_moi = data_beta[["moi"+str(x) for x in range(1,10)]]
-    data_moi.columns=[*range(1,10)]
-    data_moi_melt = pd.melt(data_moi)
-    data_moi_melt.columns = ["MOI","freq"]
-    sns.boxplot(data=data_moi_melt,x="MOI",y="freq",ax=axes[r,c])
-    
-    eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
-    pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
-    
-    if r < 3:
-        axes[r,c].set_xlabel("")
-    if c > 0:
-        axes[r,c].set_ylabel("")
-    
-    axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))
-        
+#%%
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'month',
+            y = 'vals',
+            hue = 'cols',
+            col = 'ifr',
+            row = 'beta',
+            kind = "line",
+            ci = "sd",
+            palette=sns.color_palette("husl",9)[:len(data_genotypes)],
+            height = a4_dims[1], aspect = 1.5
+            )
 
+plot.axhline(0.1, ls='--', linewidth=2, color='red')
+plot.set(xlim=(40, 72))
+plot.set(ylim=(0, 0.2))
+plot.set(xticks=range(40,72,4))
+plot.set(yticks=np.arange(0,0.2,0.025))
+plot.set_xlabels('Months')
+plot.set_ylabels('Freq.')
+plot.map(plt.axhline, y=0.1, ls='--', linewidth=2, color='red')
+
+
+plot.fig.subplots_adjust(bottom=0.1);        
+plot._legend.remove()
+plot.fig.legend(data_genotypes, ncol = 4, loc='lower center', 
+                bbox_to_anchor=(0.0, 0.0, 1.0, 0.1), frameon=False)
+plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
+
+#%%
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq.png", dpi=600)
             
