@@ -24,7 +24,7 @@ config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
 #%%
-n_run = 1
+n_run = 10
 
 data = []
 
@@ -69,26 +69,26 @@ data_plot = pd.read_csv(local_path + "data_plot_res_freq" + str(exp_number) + ".
 
 data_genotypes = data_plot.columns[0:8]
 
-data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld'], var_name='cols', value_name='vals')
+data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld',*data_genotypes[0:6]], var_name='cols', value_name='vals')
 
 #%%
 plot = sns.relplot(data = data_plot_melt, 
             x = 'month',
             y = 'vals',
             hue = 'cols',
-            col = 'ifr',
-            row = 'beta',
+            col = 'prmc_size',
+            row = 'ifr',
+            style = 'beta',
             kind = "line",
             ci = "sd",
-            palette=sns.color_palette("husl",9)[:len(data_genotypes)],
+            palette=sns.color_palette("husl",len(data_plot_melt.cols.unique()))[:len(data_plot_melt.cols.unique())],
             height = a4_dims[1], aspect = 1.5
             )
 
-plot.axhline(0.1, ls='--', linewidth=2, color='red')
-plot.set(xlim=(40, 72))
+plot.set(xlim=(48, 72))
 plot.set(ylim=(0, 0.2))
-plot.set(xticks=range(40,72,4))
-plot.set(yticks=np.arange(0,0.2,0.025))
+plot.set(xticks=range(48,72,4))
+plot.set(yticks=np.arange(0,0.2,0.05))
 plot.set_xlabels('Months')
 plot.set_ylabels('Freq.')
 plot.map(plt.axhline, y=0.1, ls='--', linewidth=2, color='red')
@@ -96,7 +96,7 @@ plot.map(plt.axhline, y=0.1, ls='--', linewidth=2, color='red')
 
 plot.fig.subplots_adjust(bottom=0.1);        
 plot._legend.remove()
-plot.fig.legend(data_genotypes, ncol = 4, loc='lower center', 
+plot.fig.legend(data_plot_melt.cols.unique(), ncol = 2, loc='lower center', 
                 bbox_to_anchor=(0.0, 0.0, 1.0, 0.1), frameon=False)
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
