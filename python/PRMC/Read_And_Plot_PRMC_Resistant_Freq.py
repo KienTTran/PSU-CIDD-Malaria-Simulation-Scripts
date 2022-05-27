@@ -56,6 +56,7 @@ for index,config in config_df.iterrows():
             csv_freq = csv_freq.fillna(0)
             csv_freq = csv_freq.drop(['temp'], axis=1)
             csv_freq['month'] = csv_freq.index
+            csv_freq['year'] = np.floor(csv_freq['month'] / 12)
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
@@ -76,7 +77,7 @@ data_plot = pd.read_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_f
 
 data_genotypes = data_plot.columns[0:8]
 
-data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld'
+data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month',
                                          # ,*data_genotypes[0:4]
                                          ], var_name='genotypes', value_name='vals')
 
@@ -86,11 +87,11 @@ plot = sns.relplot(data = data_plot_melt,
             y = 'vals',
             # col = 'cols',
             # row = 'beta',
-            hue = 'genotypes',
-            # style = 'ifr',
+            # hue = 'genotypes',
+            style = 'genotypes',
             kind = "line",
             ci = "sd",
-            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
+            # palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
             height = a4_dims[1], aspect = 1.5
             )
 
