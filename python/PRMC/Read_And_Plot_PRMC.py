@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 import math
 
-exp_number = 10
+exp_number = 7
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -22,7 +22,10 @@ config_df.set_index('Index', inplace=True)
 
 n_run = 10
 
+#%%
+
 data = []
+data_plot = []
 
 for index,config in config_df.iterrows(): 
     for run in range(n_run):
@@ -49,10 +52,10 @@ for index,config in config_df.iterrows():
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
-            # csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]]
+            csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]]
             
-            # if len(csv_db.aa_sequence) == 4:
-                # csv_freq['ld'] = csv_freq['ld'] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
+            if len(csv_db.aa_sequence) == 4:
+                csv_freq['ld'] = csv_freq['ld'] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
             
             data.append(csv_freq)            
         except Exception as e:
@@ -60,9 +63,10 @@ for index,config in config_df.iterrows():
             print(file_path_freq + " error reading " + str(e))
         
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
+
 #%%
 
-data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + ".csv",index=False)
+data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv",index=False)
 #%%
 
 import os
@@ -72,23 +76,23 @@ import numpy as np
 import math
 import seaborn as sns
 
-data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + ".csv")
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv")
 
 plot = sns.relplot(data = data_plot, 
             x = 'year',
-            y = data_plot.columns[11],
-            col = 'ifr',
+            y = 'ld',
+            col = 'prmc_size',
             row = 'beta',
-            # hue = 'ifr',
+            hue = 'ifr',
             # style = "ifr",
             kind = "line",
             ci = 'sd',
-            palette=sns.color_palette("husl",7)[:6]
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())]
             )
 
 
 #%%
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + ".png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.png", dpi=300)
 
 
             

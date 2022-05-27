@@ -33,7 +33,6 @@ config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
 n_run = 10
-genotype_column_length = 0
 
 #%%
 data = []
@@ -82,8 +81,8 @@ data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2
 mask = "||||111||10000,0||||||0000000001|1"
 masked_loci = []
 
-genotype_column_length = data_plot['genotype_column_length']
-all_genotypes = data_plot.columns[0:genotype_column_length[0]]
+genotype_column_length = data_plot['genotype_column_length'][0]
+all_genotypes = data_plot.columns[0:genotype_column_length]
 
 for index,locus in enumerate(mask):
     if locus == '1':
@@ -129,7 +128,7 @@ for genotype in all_genotypes:
         data_plot[pair] += data_plot[genotype]
         
 
-ld_columns = data_plot.columns[-8:]
+ld_columns = data_plot.columns[-7:]
 
 p_i = data_plot[ld_columns[0]]
 p_j = data_plot[ld_columns[1]]
@@ -144,16 +143,19 @@ C_ik = Psi_ik - p_i * p_k
 data_plot['ld'] = Psi_ijk - p_i * C_jk - p_j * C_ik - p_k * C_ij - p_i*p_j*p_k
 
 #%%
-plot = sns.relplot(data = data_plot, 
+data_plot['ld'] = (data_plot['ld'] - np.min(data_plot['ld'] )) / (np.max(data_plot['ld'] ) - np.min(data_plot['ld'] ))
+
+#%%
+plot = sns.relplot(data = data_plot[data_plot.prmc_size == 80], 
             x = 'year',
             y = 'ld',
-            col = 'prmc_size',
+            col = 'ifr',
             row = 'beta',
-            hue = 'ifr',
+            # hue = 'ifr',
             # style = "prmc_size",
             kind = "line",
             ci = 'sd',
-            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            # palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
             height = a4_dims[1], aspect = 1.5
             )
 

@@ -15,7 +15,7 @@
 starting_date: 2000/1/1
 
 # ending time point of the simulation (in yyyy/m/d format) 
-ending_date: 2040/1/1
+ending_date: 2030/1/1
 
 # the day at which the simulation's reporting functionality begins collecting data for 
 # EIR, # of clinical episodes, # death , # of treatment, #TF by location,...
@@ -718,7 +718,7 @@ events:
 
   - name: turn_on_mutation
     info:
-      - day: 2004/1/1
+      - day: 2005/1/1
         drug_id: -1
         mutation_probability: 0.001983
      

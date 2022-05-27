@@ -10,10 +10,9 @@ import re
 import pandas as pd
 import numpy as np
 import math
-import seaborn as sns
-import random
+import matplotlib.pyplot as plt
 
-exp_number = 11
+exp_number = 7
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -21,11 +20,14 @@ local_path_bin = local_path + "\\bin"
 
 config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
+a4_dims = (15, 8.27)
 
-n_run = 1
+n_run = 10
 
 #%%
+
 data = []
+data_plot = []
 
 for index,config in config_df.iterrows(): 
     for run in range(n_run):
@@ -52,10 +54,10 @@ for index,config in config_df.iterrows():
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
-            # csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]]
+            csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]]
             
-            # if len(csv_db.aa_sequence) == 4:
-                # csv_freq['ld'] = csv_freq['ld'] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
+            if len(csv_db.aa_sequence) == 4:
+                csv_freq['ld'] = csv_freq['ld'] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
             
             data.append(csv_freq)            
         except Exception as e:
@@ -65,40 +67,35 @@ for index,config in config_df.iterrows():
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
 
 #%%
-data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_run_" + str(n_run) + ".csv",index=False)
 
+data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv",index=False)
 #%%
-data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_run_" + str(n_run) + ".csv")
 
-#%%
-mask = "||||111||10000,0||||||0000000001|1"
-ld_loci = []
+import os
+import re
+import pandas as pd
+import numpy as np
+import math
+import seaborn as sns
 
-for index,locus in enumerate(mask):
-    if locus == '1':
-        ld_loci.append(index)
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv")
 
-ld_loci = random.sample(ld_loci,3)
-
-
-
-
-#%%
 plot = sns.relplot(data = data_plot, 
             x = 'year',
-            y = data_plot.columns[11],
-            col = 'ifr',
+            y = 'ld',
+            col = 'prmc_size',
             row = 'beta',
-            # hue = 'ifr',
+            hue = 'ifr',
             # style = "ifr",
             kind = "line",
             ci = 'sd',
-            palette=sns.color_palette("husl",7)[:6]
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            height = a4_dims[1], aspect = 1.5
             )
-
+plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
 #%%
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + ".png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.png", dpi=300)
 
 
             

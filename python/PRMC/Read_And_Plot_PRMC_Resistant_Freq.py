@@ -25,10 +25,11 @@ config_df = pd.read_csv(local_path_bin + '\\configs.csv',index_col=False)
 config_df.set_index('Index', inplace=True)
 
 #%%
-n_run = 1
-# n_run = 10
+# n_run = 1
+n_run = 10
 
 data = []
+data_plot = []
 
 for index,config in config_df.iterrows(): 
     for run in range(n_run):
@@ -58,7 +59,7 @@ for index,config in config_df.iterrows():
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
-            csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
+            # csv_freq['ld'] = csv_freq[csv_db.aa_sequence[0]]*csv_freq[csv_db.aa_sequence[1]] - csv_freq[csv_db.aa_sequence[2]]*csv_freq[csv_db.aa_sequence[3]]
             data.append(csv_freq)            
         except Exception as e:
             print(" error reading " + str(e))
@@ -66,10 +67,10 @@ for index,config in config_df.iterrows():
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
 
 #%%
-data_plot.to_csv(local_path + "data_plot_res_freq" + str(exp_number) + ".csv",index=False)  
+data_plot.to_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv",index=False)  
 
 #%%
-data_plot = pd.read_csv(local_path + "data_plot_res_freq" + str(exp_number) + ".csv") 
+data_plot = pd.read_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv") 
 
 #%%
 
@@ -93,9 +94,9 @@ plot = sns.relplot(data = data_plot_melt,
             height = a4_dims[1], aspect = 1.5
             )
 
-plot.set(xlim=(0, 120))
+plot.set(xlim=(0, 360))
 # plot.set(ylim=(0, 0.2))
-plot.set(xticks=range(0,120,12))
+plot.set(xticks=range(0,360,12))
 # plot.set(yticks=np.arange(0,0.2,0.05))
 plot.set_xlabels('Months')
 plot.set_ylabels('Freq.')
