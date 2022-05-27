@@ -94,5 +94,28 @@ plot = sns.relplot(data = data_plot,
 #%%
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.png", dpi=300)
 
+#%%
+
+import os
+import re
+import pandas as pd
+import numpy as np
+import math
+import seaborn as sns
+
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv")
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'ifr',
+            # style = "ifr",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())]
+            )
+
 
             

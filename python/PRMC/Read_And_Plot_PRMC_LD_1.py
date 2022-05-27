@@ -67,8 +67,8 @@ for index,config in config_df.iterrows():
 data_plot = pd.concat(data,ignore_index=True, axis = 0)
 
 #%%
-
 data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv",index=False)
+
 #%%
 
 import os
@@ -96,6 +96,32 @@ plt.subplots_adjust(hspace = 0.2, wspace = 0.1)
 
 #%%
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.png", dpi=300)
+
+#%%
+import os
+import re
+import pandas as pd
+import numpy as np
+import math
+import seaborn as sns
+
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.csv")
+
+data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month','year', 'ld'], var_name='genotypes', value_name='vals')
+
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'year',
+            y = 'vals',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'genotypes',
+            # style = "ifr",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot_melt.genotypes.unique())],
+            height = a4_dims[1], aspect = 1.5
+            )
+plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
 
             

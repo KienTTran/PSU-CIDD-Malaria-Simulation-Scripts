@@ -55,6 +55,7 @@ for index,config in config_df.iterrows():
             csv_freq = pd.read_csv(file_path_freq, sep='\t', header=None, names = genotype_names, index_col=None)
             csv_freq = csv_freq.fillna(0)
             csv_freq = csv_freq.drop(['temp'], axis=1)
+            csv_freq['genotype_column_length'] = len(csv_freq.columns)
             csv_freq['month'] = csv_freq.index
             csv_freq['year'] = np.floor(csv_freq['month'] / 12)
             csv_freq['beta'] = [beta]*len(csv_freq)
@@ -74,10 +75,10 @@ data_plot.to_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv
 data_plot = pd.read_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv") 
 
 #%%
+genotype_column_length = data_plot['genotype_column_length'][0]
+data_genotypes = data_plot.columns[0:genotype_column_length]
 
-data_genotypes = data_plot.columns[0:8]
-
-data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month',
+data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
                                          # ,*data_genotypes[0:4]
                                          ], var_name='genotypes', value_name='vals')
 
@@ -87,11 +88,11 @@ plot = sns.relplot(data = data_plot_melt,
             y = 'vals',
             # col = 'cols',
             # row = 'beta',
-            # hue = 'genotypes',
+            hue = 'genotypes',
             style = 'genotypes',
             kind = "line",
             ci = "sd",
-            # palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
+            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
             height = a4_dims[1], aspect = 1.5
             )
 
@@ -114,10 +115,10 @@ plt.subplots_adjust(hspace = 0.2, wspace = 0.1)
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_all.png", dpi=600)
 
 #%%
+genotype_column_length = data_plot['genotype_column_length'][0]
+data_genotypes = data_plot.columns[0:genotype_column_length]
 
-data_genotypes = data_plot.columns[0:8]
-
-data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld'
+data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
                                           ,*data_genotypes[0:6]
                                          ], var_name='genotypes', value_name='vals')
 #%%

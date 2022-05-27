@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
 import seaborn as sns
 
-exp_number = 12
-number = 0
+exp_number = 7
+number = 143000
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"

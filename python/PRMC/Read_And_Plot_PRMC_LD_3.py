@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from itertools import combinations
 import yaml
 
-exp_number = 7
+exp_number = 12
 
 a4_dims = (15, 8.27)
 
@@ -76,7 +76,6 @@ for index,config in config_df.iterrows():
         except Exception as e:
             raise
             print(file_path_freq + " error reading " + str(e))
-            
 data_plot = pd.concat(data,ignore_index=True, axis = 0)    
 
 #%%
@@ -86,7 +85,6 @@ data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv",i
 
 data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv")
 
-#%%
 mask = data_plot['mutation_mask'][0]
 masked_loci = []
 
@@ -98,65 +96,70 @@ for index,locus in enumerate(mask):
         masked_loci.append(index)
 
 loci_3 = random.sample(masked_loci,3)
+# loci_3 = [31,33,4]
 loci_3_all = list(combinations(masked_loci, 3)) 
-
-loci_3 = [9,31,33]
-
-loci_2 = list(combinations(loci_3, 2))  
-allele_map = {}
-allele_freq_single = []
-allele_freq_pair = []
-
+    
 observe_index = 0
 observe_genotype = all_genotypes[observe_index]
 
+allele_map = {}
+
 #p_i, p_j, p_k
-for locus,locus_pair in zip(loci_3,loci_2):
-    allele_map[locus] = observe_genotype[locus]
+for locus in masked_loci:
+    allele_map[locus] = observe_genotype[locus]    
     data_plot[str(locus) + '-' + observe_genotype[locus]] = 0
 
-#Psi_ij, Psi_jk, Psi_ik   
-for locus,locus_pair in zip(loci_3,loci_2):
-    pair = str(locus_pair[0]) + '-' + observe_genotype[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + observe_genotype[locus_pair[1]]
-    data_plot[pair] = 0
- 
-#Psi_ijk
-pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
-data_plot[pair] = 0
-
-#Allele freq
-for genotype in all_genotypes:
-    #p_i, p_j, p_k
-    for locus in loci_3:
-        if genotype[locus] == allele_map[locus]:
-            data_plot[str(locus) + '-' + allele_map[locus]] += data_plot[genotype];
-    #Psi_ij, Psi_jk, Psi_ik
-    for locus_pair in loci_2:
-        if genotype[locus_pair[0]] == allele_map[locus_pair[0]] and genotype[locus_pair[1]] == allele_map[locus_pair[1]]:
-            pair = str(locus_pair[0]) + '-' + allele_map[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + allele_map[locus_pair[1]]
-            data_plot[pair] += data_plot[genotype]   
+for index,loci_3 in enumerate(loci_3_all):  
+    loci_3_str = '-'.join([str(elem) for elem in loci_3])
+    loci_2 = list(combinations(loci_3, 2)) 
+    
+    #Psi_ij, Psi_jk, Psi_ik   
+    for locus,locus_pair in zip(loci_3,loci_2):
+        pair = str(locus_pair[0]) + '-' + observe_genotype[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + observe_genotype[locus_pair[1]]
+        data_plot[pair] = 0
+     
     #Psi_ijk
-    if genotype[loci_3[0]] == allele_map[loci_3[0]] and genotype[loci_3[1]] == allele_map[loci_3[1]] and genotype[loci_3[2]] == allele_map[loci_3[2]]:
-        pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
-        data_plot[pair] += data_plot[genotype]
-        
+    pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
+    data_plot[pair] = 0
+    
+    #Allele freq
+    for genotype in all_genotypes:
+        #p_i, p_j, p_k
+        for locus in loci_3:
+            if genotype[locus] == allele_map[locus]:
+                data_plot[str(locus) + '-' + allele_map[locus]] += data_plot[genotype];
+        #Psi_ij, Psi_jk, Psi_ik
+        for locus_pair in loci_2:
+            if genotype[locus_pair[0]] == allele_map[locus_pair[0]] and genotype[locus_pair[1]] == allele_map[locus_pair[1]]:
+                pair = str(locus_pair[0]) + '-' + allele_map[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + allele_map[locus_pair[1]]
+                data_plot[pair] += data_plot[genotype]   
+        #Psi_ijk
+        if genotype[loci_3[0]] == allele_map[loci_3[0]] and genotype[loci_3[1]] == allele_map[loci_3[1]] and genotype[loci_3[2]] == allele_map[loci_3[2]]:
+            pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
+            data_plot[pair] += data_plot[genotype]
+            
+#%%   
+    ld_columns = data_plot.columns[-4:]
+    print(loci_3,ld_columns)
+    
+    p_i = data_plot[ld_columns[0]]
+    p_j = data_plot[ld_columns[1]]
+    p_k = data_plot[ld_columns[2]]
+    Psi_ij = data_plot[ld_columns[3]]
+    Psi_ik = data_plot[ld_columns[4]]
+    Psi_jk = data_plot[ld_columns[5]]
+    Psi_ijk = data_plot[ld_columns[6]]
+    C_ij = Psi_ij - p_i * p_j
+    C_jk = Psi_jk - p_j * p_k
+    C_ik = Psi_ik - p_i * p_k
+    data_plot['ld'] = Psi_ijk - p_i * C_jk - p_j * C_ik - p_k * C_ij - p_i*p_j*p_k  
+    
+#%%
+data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_3.csv",index=False)   
 
-ld_columns = data_plot.columns[-7:]
+#%%
 
-p_i = data_plot[ld_columns[0]]
-p_j = data_plot[ld_columns[1]]
-p_k = data_plot[ld_columns[2]]
-Psi_ij = data_plot[ld_columns[3]]
-Psi_ik = data_plot[ld_columns[4]]
-Psi_jk = data_plot[ld_columns[5]]
-Psi_ijk = data_plot[ld_columns[6]]
-C_ij = Psi_ij - p_i * p_j
-C_jk = Psi_jk - p_j * p_k
-C_ik = Psi_ik - p_i * p_k
-data_plot['ld'] = Psi_ijk - p_i * C_jk - p_j * C_ik - p_k * C_ij - p_i*p_j*p_k
-# data_plot['ld'] = C_ij
-
-loci_3_str = '-'.join([str(elem) for elem in loci_3])
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_3.csv")
 
 plot = sns.relplot(data = data_plot, 
             x = 'month',
@@ -170,10 +173,12 @@ plot = sns.relplot(data = data_plot,
             palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
             height = a4_dims[1], aspect = 1.5
             )
+
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + " .png", dpi=300)        
-        
+# for ax in plot.axes.flat:
+#     ax.set_title("test")
+#     ax.title.set_position([0.5, 1.0])
 #%%
-sns.lineplot(x = data_plot['month'],
-            y = data_plot[all_genotypes] )
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(loci_3_str) + " .png", dpi=300)        
+        
