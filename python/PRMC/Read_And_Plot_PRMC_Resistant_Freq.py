@@ -119,6 +119,26 @@ genotype_column_length = data_plot['genotype_column_length'][0]
 data_genotypes = data_plot.columns[0:genotype_column_length]
 
 data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
+                                         ], var_name='genotypes', value_name='freq')
+
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'month',
+            y = 'freq',
+            col = 'genotypes',
+            row = 'beta',
+            # hue = 'genotypes',
+            # style = 'ifr',
+            kind = "line",
+            # ci = "sd",
+            # palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+#%%
+genotype_column_length = data_plot['genotype_column_length'][0]
+data_genotypes = data_plot.columns[0:genotype_column_length]
+
+data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
                                           ,*data_genotypes[0:6]
                                          ], var_name='genotypes', value_name='vals')
 #%%
