@@ -12,7 +12,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-exp_number = 7
+exp_number = 13
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -118,7 +118,7 @@ plot = sns.relplot(data = data_plot_melt,
             # style = "ifr",
             kind = "line",
             ci = 'sd',
-            palette=sns.color_palette("husl",7)[:len(data_plot_melt.genotypes.unique())],
+            # palette=sns.color_palette("husl",7)[:len(data_plot_melt.genotypes.unique())],
             height = a4_dims[1], aspect = 1.5
             )
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 

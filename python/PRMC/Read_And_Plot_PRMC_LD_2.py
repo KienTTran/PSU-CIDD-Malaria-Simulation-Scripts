@@ -22,9 +22,9 @@ import matplotlib.pyplot as plt
 from itertools import combinations
 import yaml
 
-exp_number = 7
+exp_number = 13
 
-a4_dims = (15, 8.27)
+a4_dims = (11.69, 8.27)
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -63,21 +63,21 @@ for index,config in config_df.iterrows():
             genotype_names = csv_db.aa_sequence
             genotype_names = pd.concat([genotype_names, pd.Series(["temp"])], ignore_index=True)
             csv_freq = pd.read_csv(file_path_freq, sep='\t', header=None, names = genotype_names, index_col=None)
-            csv_freq = csv_freq.fillna(0)
-            csv_freq = csv_freq.drop(['temp'], axis=1) 
-            csv_freq['genotype_column_length'] = len(csv_freq.columns)
+            csv_freq = csv_freq.drop(['temp'], axis=1)
             csv_freq['mutation_mask'] = mutation_mask
             csv_freq['month'] = csv_freq.index
             csv_freq['year'] = np.floor(csv_freq['month'] / 12)
             csv_freq['beta'] = [beta]*len(csv_freq)
             csv_freq['prmc_size'] = [prmc_size]*len(csv_freq)
             csv_freq['ifr'] = [ifr]*len(csv_freq)
+            csv_freq = csv_freq.fillna(0)
             data.append(csv_freq)
         except Exception as e:
             raise
             print(file_path_freq + " error reading " + str(e))
             
 data_plot = pd.concat(data,ignore_index=True, axis = 0)    
+data_plot = data_plot.fillna(0)
 
 #%%
 data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv",index=False)          
@@ -86,12 +86,17 @@ data_plot.to_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv",i
 
 data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv")
 
-#%%
+all_genotypes = []
+
+for column in data_plot.columns:
+    if '|||' in column:
+        all_genotypes.append(column)
+        
+observe_index = 7
+observe_genotype = all_genotypes[observe_index]
+
 mask = data_plot['mutation_mask'][0]
 masked_loci = []
-
-genotype_column_length = data_plot['genotype_column_length'][0]
-all_genotypes = data_plot.columns[0:genotype_column_length]
 
 for index,locus in enumerate(mask):
     if locus == '1':
@@ -104,19 +109,14 @@ loci_3 = [9,31,33]
 
 loci_2 = list(combinations(loci_3, 2))  
 allele_map = {}
-allele_freq_single = []
-allele_freq_pair = []
-
-observe_index = 0
-observe_genotype = all_genotypes[observe_index]
 
 #p_i, p_j, p_k
-for locus,locus_pair in zip(loci_3,loci_2):
+for locus in loci_3:
     allele_map[locus] = observe_genotype[locus]
     data_plot[str(locus) + '-' + observe_genotype[locus]] = 0
 
 #Psi_ij, Psi_jk, Psi_ik   
-for locus,locus_pair in zip(loci_3,loci_2):
+for locus_pair in loci_2:
     pair = str(locus_pair[0]) + '-' + observe_genotype[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + observe_genotype[locus_pair[1]]
     data_plot[pair] = 0
  
@@ -124,23 +124,29 @@ for locus,locus_pair in zip(loci_3,loci_2):
 pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
 data_plot[pair] = 0
 
+index = np.random.randint(0, len(data_plot), size=1)[0]
 #Allele freq
 for genotype in all_genotypes:
+    print("Genotype " + str(index) + " " + genotype + " freq = " + str(data_plot[genotype][index]))
     #p_i, p_j, p_k
     for locus in loci_3:
         if genotype[locus] == allele_map[locus]:
-            data_plot[str(locus) + '-' + allele_map[locus]] += data_plot[genotype];
+            pair = str(locus) + '-' + allele_map[locus]
+            print("  Psi_" + pair + " += " + str(data_plot[genotype][index]))
+            data_plot[pair] += data_plot[genotype];
     #Psi_ij, Psi_jk, Psi_ik
     for locus_pair in loci_2:
-        if genotype[locus_pair[0]] == allele_map[locus_pair[0]] and genotype[locus_pair[1]] == allele_map[locus_pair[1]]:
+        if genotype[locus_pair[0]] == allele_map[locus_pair[0]] and genotype[locus_pair[1]] == allele_map[locus_pair[1]]:            
             pair = str(locus_pair[0]) + '-' + allele_map[locus_pair[0]] + '-' + str(locus_pair[1]) + '-' + allele_map[locus_pair[1]]
+            print("  Psi_" + pair + " += " + str(data_plot[genotype][index]))
             data_plot[pair] += data_plot[genotype]   
     #Psi_ijk
     if genotype[loci_3[0]] == allele_map[loci_3[0]] and genotype[loci_3[1]] == allele_map[loci_3[1]] and genotype[loci_3[2]] == allele_map[loci_3[2]]:
         pair = str(loci_3[0]) + '-' + allele_map[loci_3[0]] + '-' + str(loci_3[1]) + '-' + allele_map[loci_3[1]] + '-' + str(loci_3[2]) + '-' + allele_map[loci_3[2]]
+        print("  Psi_" + pair + " += " + str(data_plot[genotype][index]))
         data_plot[pair] += data_plot[genotype]
         
-
+#%%
 ld_columns = data_plot.columns[-7:]
 
 p_i = data_plot[ld_columns[0]]
@@ -153,13 +159,17 @@ Psi_ijk = data_plot[ld_columns[6]]
 C_ij = Psi_ij - p_i * p_j
 C_jk = Psi_jk - p_j * p_k
 C_ik = Psi_ik - p_i * p_k
-data_plot['ld'] = Psi_ijk - p_i * C_jk - p_j * C_ik - p_k * C_ij - p_i*p_j*p_k
-# data_plot['ld'] = C_ij
+data_plot['ld-ij'] = C_ij
+data_plot['ld-jk'] = C_jk
+data_plot['ld-ik'] = C_ik
+data_plot['ld-ijk'] = Psi_ijk - p_i*p_j*p_k
+data_plot['ld'] = Psi_ijk - (p_i * C_jk) - (p_j * C_ik) - (p_k * C_ij) - p_i*p_j*p_k
 
+#%%
 loci_3_str = '-'.join([str(elem) for elem in loci_3])
 
 plot = sns.relplot(data = data_plot, 
-            x = 'month',
+            x = 'year',
             y = 'ld',
             col = 'prmc_size',
             row = 'beta',
@@ -168,12 +178,136 @@ plot = sns.relplot(data = data_plot,
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
-            height = a4_dims[1], aspect = 1.5
+            # height = a4_dims[1], aspect = 1.5
             )
-plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + " .png", dpi=300)        
+# plot.set(xlim=(0, 30))
+# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+# plot.set(xticks=range(0,30,5))
+# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
+for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
+    ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
+plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
+plot.fig.suptitle('LD')
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + ".png", dpi=300)
+plt.close()
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld-ij',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'ifr',
+            # style = "prmc_size",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+# plot.set(xlim=(0, 30))
+# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+# plot.set(xticks=range(0,30,5))
+# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
+plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
+plot.fig.suptitle('LD-IJ')
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + "-IJ.png", dpi=300)
+plt.close()
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld-jk',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'ifr',
+            # style = "prmc_size",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+# plot.set(xlim=(0, 30))
+# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+# plot.set(xticks=range(0,30,5))
+# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
+plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
+plot.fig.suptitle('LD-JK')
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + "-JK.png", dpi=300)
+plt.close()
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld-ik',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'ifr',
+            # style = "prmc_size",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+# plot.set(xlim=(0, 30))
+# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+# plot.set(xticks=range(0,30,5))
+# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
+plt.subplots_adjust(hspace = 0.1, wspace = 0.1) 
+plot.fig.suptitle('LD-IK')
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + "-IK.png", dpi=300)
+plt.close()
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld-ijk',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'ifr',
+            # style = "prmc_size",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",7)[:len(data_plot.ifr.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+# plot.set(xlim=(0, 30))
+# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+# plot.set(xticks=range(0,30,5))
+# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
+plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
+plot.fig.suptitle('LD-IJK')
+
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + "-IJK.png", dpi=300)
+plt.close()
+#%%
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_" + str(observe_index) + '_' + str(loci_3_str) + ".png", dpi=300)        
         
 #%%
-sns.lineplot(x = data_plot['month'],
-            y = data_plot[all_genotypes] )
+import os
+import re
+import pandas as pd
+import numpy as np
+import math
+import seaborn as sns
+
+data_plot = pd.read_csv(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2.csv")
+
+data_plot_melt = data_plot.melt(id_vars=['beta', 'mutation_mask', 'prmc_size', 'ifr','month','year'], var_name='genotypes', value_name='vals')
+
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'year',
+            y = 'vals',
+            col = 'prmc_size',
+            row = 'beta',
+            hue = 'genotypes',
+            # style = "ifr",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+plt.subplots_adjust(hspace = 0.1, wspace = 0.1) 
+
+#%%
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_freq_" + str(loci_3_str) + ".png", dpi=300)        
