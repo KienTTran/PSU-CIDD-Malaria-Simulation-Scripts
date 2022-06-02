@@ -55,7 +55,6 @@ for index,config in config_df.iterrows():
             csv_freq = pd.read_csv(file_path_freq, sep='\t', header=None, names = genotype_names, index_col=None)
             csv_freq = csv_freq.fillna(0)
             csv_freq = csv_freq.drop(['temp'], axis=1)
-            csv_freq['genotype_column_length'] = len(csv_freq.columns)
             csv_freq['month'] = csv_freq.index
             csv_freq['year'] = np.floor(csv_freq['month'] / 12)
             csv_freq['beta'] = [beta]*len(csv_freq)
@@ -74,15 +73,33 @@ data_plot.to_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv
 #%%
 data_plot = pd.read_csv(local_path + "data_plot_exp" + str(exp_number) + "_res_freq.csv") 
 
-#%%
-genotype_column_length = data_plot['genotype_column_length'][0]
-data_genotypes = data_plot.columns[0:genotype_column_length]
+all_genotypes = []
+trip_res_genotypes = []
+non_trip_res_genotypes = []
+parameters = []
+        
+trip_res_alleles = [[9,'T'],[31,'Y'],[33,'2']]
 
-data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
-                                         # ,*data_genotypes[0:4]
+for column in data_plot.columns:
+    if '|||' in column:
+        all_genotypes.append(column)
+        if column[trip_res_alleles[0][0]] == trip_res_alleles[0][1] \
+        and column[trip_res_alleles[1][0]] == trip_res_alleles[1][1] \
+        and column[trip_res_alleles[2][0]] == trip_res_alleles[2][1] \
+        and data_plot[column].sum() != 0.0:
+            trip_res_genotypes.append(column)    
+        else:
+            non_trip_res_genotypes.append(column)
+    else:
+        parameters.append(column)
+        
+print('Tripple resistant genotype: ' + trip_res_genotypes)
+
+#%%
+#Plot all genotypes
+data_plot_melt = data_plot.melt(id_vars=[*parameters
                                          ], var_name='genotypes', value_name='vals')
 
-#%%
 plot = sns.relplot(data = data_plot_melt, 
             x = 'month',
             y = 'vals',
@@ -103,112 +120,159 @@ plot.set(xticks=range(0,360,12))
 plot.set_xlabels('Months')
 plot.set_ylabels('Freq.')
 plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
-
-# legends = [data_plot_melt.ifr.unique(),data_plot_melt.prmc_size.unique()]
-plot.fig.subplots_adjust(bottom=0.1);        
-# plot._legend.remove()
-# plot.fig.legend(data_plot_melt.genotypes.unique(), ncol = 1, loc='center right', 
-#                 bbox_to_anchor=(0.0, 0.0, 1.0, 0.1), frameon=False)
+plot.fig.subplots_adjust(bottom=0.1);    
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
-#%%
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_all.png", dpi=600)
 
 #%%
-genotype_column_length = data_plot['genotype_column_length'][0]
-data_genotypes = data_plot.columns[0:genotype_column_length]
-
-data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
-                                         ], var_name='genotypes', value_name='freq')
+#Plot tripple resistant genotypes
+data_plot_melt = data_plot.melt([*parameters
+                                 ,*non_trip_res_genotypes
+                                ],var_name='genotypes', value_name='freq')
 
 plot = sns.relplot(data = data_plot_melt, 
-            x = 'month',
+            x = 'year',
             y = 'freq',
-            col = 'genotypes',
+            col = 'prmc_size',
             row = 'beta',
-            # hue = 'genotypes',
-            # style = 'ifr',
+            hue = 'ifr',
+            style = 'prmc_size',
             kind = "line",
-            # ci = "sd",
-            # palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
+            ci = "sd",
+            palette=sns.color_palette("husl",len(data_plot_melt.ifr.unique()))[:len(data_plot_melt.ifr.unique())],
             # height = a4_dims[1], aspect = 1.5
             )
 
-#%%
-genotype_column_length = data_plot['genotype_column_length'][0]
-data_genotypes = data_plot.columns[0:genotype_column_length]
+# plot.set(xlim=(0, 360))
+plot.set(ylim=(0, 0.02))
+# plot.set(xticks=range(0,360,12))
+plot.set(yticks=np.arange(0,0.02,0.005))
 
-data_plot_melt = data_plot.melt(id_vars=[*data_plot.columns[genotype_column_length:]
-                                          ,*data_genotypes[0:6]
-                                         ], var_name='genotypes', value_name='vals')
 #%%
+#Plot tripple resistant genotypes
+data_plot_melt = data_plot.melt([*parameters
+                                 ,*non_trip_res_genotypes
+                                ],var_name='genotypes', value_name='freq')
+
 plot = sns.relplot(data = data_plot_melt, 
-            x = 'month',
-            y = 'vals',
-            # col = 'cols',
-            # row = 'beta',
-            hue = 'genotypes',
-            # style = 'ifr',
+            x = 'year',
+            y = 'freq',
+            col = 'ifr',
+            row = 'beta',
+            hue = 'prmc_size',
+            style = 'prmc_size',
             kind = "line",
             ci = "sd",
-            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
-            height = a4_dims[1], aspect = 1.5
+            palette=sns.color_palette("husl",len(data_plot_melt.prmc_size.unique()))[:len(data_plot_melt.prmc_size.unique())],
+            # height = a4_dims[1], aspect = 1.5
             )
 
-plot.set(xlim=(46, 60))
-plot.set(ylim=(0, 0.05))
-plot.set(xticks=range(46,60,1))
-plot.set(yticks=np.arange(0,0.05,0.01))
-plot.set_xlabels('Months')
-plot.set_ylabels('Freq.')
+plot.set(xlim=(5, 20))
+plot.set(ylim=(0, 0.015))
+plot.set(xticks=range(5,20,2))
+plot.set(yticks=np.arange(0,0.015,0.005))
+plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
 
-# legends = [data_plot_melt.ifr.unique(),data_plot_melt.prmc_size.unique()]
-plot.fig.subplots_adjust(bottom=0.1);        
-# plot._legend.remove()
-# plot.fig.legend(data_plot_melt.cols.unique(), ncol = 2, loc='lower center', 
-#                 bbox_to_anchor=(0.0, 0.0, 1.0, 0.1), frameon=False)
-plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple.png", dpi=300)
 
 #%%
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_2.png", dpi=600)
+#Plot tripple resistant genotypes
+data_plot_melt = data_plot[data_plot.prmc_size == 80].melt([*parameters
+                                 ,*non_trip_res_genotypes
+                                ],var_name='genotypes', value_name='freq')
 
-#%%
-
-data_genotypes = data_plot.columns[0:8]
-
-data_plot_melt = data_plot.melt(id_vars=['beta', 'prmc_size', 'ifr','month', 'ld'
-                                          ,*data_genotypes[0:6]
-                                         ], var_name='genotypes', value_name='vals')
-            
-#%%
-
-beta = 0.08
-plot = sns.relplot(data = data_plot_melt[data_plot_melt.beta == beta], 
-            x = 'month',
-            y = 'vals',
-            col = 'prmc_size',
-            row = 'ifr',
-            hue = 'genotypes',
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'year',
+            y = 'freq',
+            col = 'ifr',
+            row = 'beta',
+            # hue = 'prmc_size',
+            # style = 'prmc_size',
             kind = "line",
             ci = "sd",
-            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
-            height = a4_dims[1], aspect = 1.5
+            # palette=sns.color_palette("husl",len(data_plot_melt.prmc_size.unique()))[:len(data_plot_melt.prmc_size.unique())],
+            # height = a4_dims[1], aspect = 1.5
             )
 
-plot.set(xlim=(40, 84))
-plot.set(ylim=(0, 0.2))
-plot.set(xticks=range(40,84,6))
-# plot.set(yticks=np.arange(0,0.2,0.05))
-plot.set_xlabels('Months')
-plot.set_ylabels('Freq.')
-plot.map(plt.axhline, y=0.1, ls='--', linewidth=2, color='red')
+plot.set(xlim=(5, 20))
+plot.set(ylim=(0, 0.015))
+plot.set(xticks=range(5,20,2))
+plot.set(yticks=np.arange(0,0.015,0.005))
+plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
+plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-# legends = [data_plot_melt.ifr.unique(),data_plot_melt.prmc_size.unique()]
-plot.fig.subplots_adjust(bottom=0.1);        
-plot._legend.remove()
-plot.fig.legend(data_plot_melt.genotypes.unique(), ncol = 2, loc='lower center', 
-                bbox_to_anchor=(0.0, 0.0, 1.0, 0.1), frameon=False)
-plt.subplots_adjust(hspace = 0.2, wspace = 0.1)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-80.png", dpi=300)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_2_beta_" + str(beta) + ".png", dpi=300)
+#%%
+#Plot tripple resistant genotypes
+
+facet_kws={'sharey': True, 'sharex': False}
+
+data_plot_melt = data_plot[data_plot.prmc_size == 80].melt([*parameters
+                                  ,*non_trip_res_genotypes
+                                ],var_name='genotypes', value_name='freq')
+
+# data_plot_melt = data_plot.melt([*parameters
+#                                  ,*non_trip_res_genotypes
+#                                 ],var_name='genotypes', value_name='freq')
+
+plot = sns.relplot(data = data_plot_melt, 
+            x = 'year',
+            y = 'freq',
+            col = 'ifr',
+            row = 'beta',
+            # hue = 'beta',
+            # style = 'beta',
+            kind = "line",
+            lw = 6,
+            ci = "sd",
+            # palette=sns.color_palette("husl",len(data_plot_melt.prmc_size.unique()))[:len(data_plot_melt.prmc_size.unique())],
+            # height = a4_dims[1], aspect = 1.5,
+            facet_kws={'sharey': True, 'sharex': False}
+            )
+
+# plot.map(sns.lineplot, 'timepoint', 'signal', color='r', ci=None, lw=3)
+
+time_to_res = []
+freq_res = []
+        
+# for index,ax in enumerate(plot.axes.flatten()):
+#     beta = float(ax.get_title().split(' | ')[0].split(' = ')[1])
+#     ifr = float(ax.get_title().split(' | ')[1].split(' = ')[1])
+#     data_beta_ifr_res = data_plot_melt[(data_plot_melt.beta == beta )& (data_plot_melt.ifr == ifr)
+#                                        & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
+#     index = data_beta_ifr_res[data_beta_ifr_res.freq.between(0.010,0.011)].index[0]
+#     year = data_beta_ifr_res.year[index]
+#     freq = data_beta_ifr_res.freq[index]
+#     time_to_res.append(year)
+#     freq_res.append(freq)
+#     print(beta,ifr,year,freq)
+#     sns.lineplot(data = data_beta_ifr_res, x='year', y='freq', ax=ax, color='green', lw=3)
+#     ax.axvline(x=year,ls='--',linewidth=2,color='green')
+#     ax.axhline(y=freq,ls='--',linewidth=2,color='red')
+    
+for index,ax in enumerate(plot.axes.flatten()):
+    beta = float(ax.get_title().split(' | ')[0].split(' = ')[1])
+    ifr = float(ax.get_title().split(' | ')[1].split(' = ')[1])
+    data_res = data_plot_melt[(data_plot_melt.beta == beta ) & (data_plot_melt.ifr == ifr)
+                                       & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
+
+    data_res_freq = data_res.groupby('year').freq.mean()
+    xi = data_res.year.unique()
+    yi = data_res_freq
+    # print(np.all(np.diff(xi) > 0),np.all(np.diff(yi) > 0))
+    sns.lineplot(data = data_res_freq, x=xi, y=yi, ax=ax, color='red', lw=2,ls='--')
+    x_res = np.interp(0.010, yi, xi, period = np.inf)
+    ax.axvline(x = x_res, ls='--', lw=2, color='red')
+    ax.axhline(y=0.010, ls='--', lw=2, color='red')
+    
+
+plot.set(xlim=(5, 20))
+plot.set(ylim=(0, 0.015))
+plot.set(xticks=range(5,20,2))
+plot.set(yticks=np.arange(0,0.015,0.005))
+plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
+
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-80-2.png", dpi=300)
