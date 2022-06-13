@@ -12,7 +12,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-exp_number = 13
+exp_number = 11
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -94,7 +94,6 @@ plot = sns.relplot(data = data_plot,
             )
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
-#%%
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_1.png", dpi=300)
 
 #%%
