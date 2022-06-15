@@ -15,7 +15,7 @@
 starting_date: 2000/1/1
 
 # ending time point of the simulation (in yyyy/m/d format) 
-ending_date: 2040/1/1
+ending_date: 2030/1/1
 
 # the day at which the simulation's reporting functionality begins collecting data for 
 # EIR, # of clinical episodes, # death , # of treatment, #TF by location,...
@@ -59,12 +59,12 @@ location_db:
   # probability that a symptomatic and infected individual seeks and receives antimalarial treatment
   #if the number of values less than number of locations, the first value will be applied for all locations
   # this is the initial value, the modification values can be change by setting in events node
-  p_treatment_for_less_than_5_by_location: [ 0.0000 ]
-  p_treatment_for_more_than_5_by_location: [ 0.0000 ]
+  p_treatment_for_less_than_5_by_location: [ 0.500000 ]
+  p_treatment_for_more_than_5_by_location: [ 0.500000 ]
 
   #transmission intensity
   #if the number of values less than number of locations, the first value will be applied for all locations
-  beta_by_location: [ 0.09 ]
+  beta_by_location: [ 0.3 ]
 
   #if the number of values less than number of locations, the first value will be applied for all locations
   population_size_by_location: [ 500000 ]
@@ -91,8 +91,6 @@ spatial_model:
     alpha: 0.22268982
     beta: 0.14319618
     gamma: 0.83741484
-
-
 
 # below value indicates 37.25 births per 1000 individuals per year
 birth_rate: 0.03725
@@ -146,13 +144,15 @@ immune_system_information:
   max_clinical_probability: 0.99
 
   # slope of sigmoidal prob-v-immunity function (parameter z in supplement of 2015 LGH paper) 
-  immune_effect_on_progression_to_clinical: 4
+  #immune_effect_on_progression_to_clinical: 4
+  immune_effect_on_progression_to_clinical: 5.15
 
   # age at which immune function is mature
   age_mature_immunity: 10
 
   # parameter kappa in supplement of 2015 LGH paper
-  factor_effect_age_mature_immunity: 1
+  #factor_effect_age_mature_immunity: 1
+  factor_effect_age_mature_immunity: 0.25
 
 
 # this functionality works, but it was not used in any analyses for the 2015 LGH paper
@@ -173,7 +173,7 @@ circulation_info:
     mean: 5
     sd: 10
 
-mutation_mask: "||||000||10000,0||||||0000000001|1"
+mutation_mask: "||||111||10000,0||||||0000000001|1"
 # mutation_mask: "||||000||00000,0||||||0000000000|0"
 
 # the appearance of gene should be in order
@@ -183,7 +183,7 @@ pf_genotype_info:
       - name: "Pfmdr1"
         max_copies: 2
         # copy number variation cost of resistances
-        cnv_daily_crs: [ 0, 0.0 ]
+        cnv_daily_crs: [ 0, 0.0055 ]
         cnv_multiplicative_effect_on_EC50:
           - drug_id: 4
             factors: [ 1, 2.44444444 ]
@@ -195,7 +195,7 @@ pf_genotype_info:
         aa_positions:
           - position: 86
             amino_acids: [ 'N', 'Y' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 6
                 factors: [ 1, 1.25 ]
@@ -205,7 +205,7 @@ pf_genotype_info:
                 factors: [ 1, 1.42 ]
           - position: 184
             amino_acids: [ 'Y', 'F' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 1
                 factors: [ 1, 1.25 ] # base*1.25*1.25 0.9375 > 0.8xxx (old value)
@@ -214,11 +214,11 @@ pf_genotype_info:
   - chromosome: 7
     genes:
       - name: "Pfcrt"
-        #        multiplicative_effect_on_EC50_for_2_or_more_mutations: 1.1
+#        multiplicative_effect_on_EC50_for_2_or_more_mutations: 1.1
         aa_positions:
           - position: 76
             amino_acids: [ 'K', 'T' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 6
                 factors: [ 1, 1.6 ]
@@ -228,25 +228,25 @@ pf_genotype_info:
                 factors: [ 1, 1.2 ]
           - position: 93
             amino_acids: [ 'T', 'S' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: -1
                 factors: [ 1, 1.6 ]
           - position: 97
             amino_acids: [ 'H', 'T' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: -1
                 factors: [ 1, 1.6 ]
           - position: 145
             amino_acids: [ 'F', 'I' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: -1
                 factors: [ 1, 1.6 ]
           - position: 218
             amino_acids: [ 'I', 'F' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: -1
                 factors: [ 1, 1.6 ]
@@ -254,7 +254,7 @@ pf_genotype_info:
         aa_positions:
           - position: 500
             amino_acids: [ 'x', 'X' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 7
                 factors: [ 1, 1.6 ]
@@ -267,61 +267,61 @@ pf_genotype_info:
         aa_positions:
           - position: 446
             amino_acids: [ 'F', 'I' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 458
             amino_acids: [ 'N', 'Y' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 476
             amino_acids: [ 'M', 'I' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 493
             amino_acids: [ 'Y', 'H' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 539
             amino_acids: [ 'R', 'T' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 543
             amino_acids: [ 'I', 'T' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 553
             amino_acids: [ 'P', 'L' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 561
             amino_acids: [ 'R', 'H' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 574
             amino_acids: [ 'P', 'L' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
           - position: 580
             amino_acids: [ 'C', 'Y' ]
-            daily_crs: [ 0, 0.0 ]
+            daily_crs: [ 0, 0.0005 ]
             multiplicative_effect_on_EC50:
               - drug_id: 0
                 factors: [ 1, 1.6 ]
@@ -329,7 +329,7 @@ pf_genotype_info:
     genes:
       - name: "Pfplasmepsin"
         max_copies: 2
-        cnv_daily_crs: [ 0, 0.0 ]
+        cnv_daily_crs: [ 0, 0.0005 ]
         cnv_multiplicative_effect_on_EC50:
           - drug_id: 3
             factors: [ 1, 2.4137931 ]
@@ -409,16 +409,16 @@ override_ec50_patterns:
     drug_id: 2
     ec50: 0.82
 
-within_chromosome_recombination_rate: 0.0
+within_chromosome_recombination_rate: 0.1
 
 initial_parasite_info:
   #if location id is -1 all location will have the same initial parasites
   - location_id: -1
     parasite_info:
-      - aa_sequence: "||||YY1||KTHFI,x||||||FNMYRIPRPC|1"
+      - aa_sequence: "||||NY1||KTHFI,x||||||FNMYRIPRPC|1"
         prevalence: 0.05
-      - aa_sequence: "||||YY1||TTHFI,x||||||FNMYRIPRPY|2"
-        prevalence: 0.05
+      # - aa_sequence: "||||YY1||TTHFI,x||||||FNMYRIPRPC|1"
+        # prevalence: 0.05
 
 # drug information below
 #
@@ -585,13 +585,12 @@ therapy_db:
 
 # drug-deployment strategy - simply uncomment below to turn on a particular strategy
 strategy_db:
-  0:
-    name: CQ-SFTStrategy
-    type: SFT
-    therapy_id: 12
+    0:
+        name: CQ-SFTStrategy
+        type: SFT
+        therapy_id: 12
 
 initial_strategy_id: 0
-
 
 
 # this number use to detemine whether a therapy is "useful" or not and it is used to calculate 
@@ -716,21 +715,12 @@ events:
     info:
       - day: 2000/1/1
 
-  - name: change_interrupted_feeding_rate
+  - name: turn_on_mutation
     info:
-      - location: 0
-        day: 2000/1/1
-        rate: 0.0
-                
-  - name: change_interrupted_feeding_rate
-    info:
-      - location: 0
-        day: 2010/1/1
-        rate: 0.0
-
-#  - name: turn_on_mutation
-#    info:
-#      - day: 2010/1/1
+      - day: 2005/1/1
+        drug_id: -1
+        mutation_probability: 0.001983
+     
   # - name: introduce_plas2_parasites
   #   info:
   #     - location: 0
@@ -836,6 +826,6 @@ sd_prob_individual_present_at_mda: [ 0.3, 0.3, 0.3 ]
 #Mosquito
 mosquito_config:
   interrupted_feeding_rate: [ 0.19 ]
-  prmc_size: 800
+  prmc_size: 100
   
-within_host_induced_free_recombination: false
+within_host_induced_free_recombination: true

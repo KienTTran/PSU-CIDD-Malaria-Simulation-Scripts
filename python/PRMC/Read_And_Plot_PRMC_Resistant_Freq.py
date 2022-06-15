@@ -15,7 +15,7 @@ import seaborn as sns
 
 a4_dims = (11.7, 8.27)
 
-exp_number = 11
+exp_number = 12
 
 local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -78,7 +78,7 @@ trip_res_genotypes = []
 non_trip_res_genotypes = []
 parameters = []
         
-trip_res_alleles = [[4,'Y'],[31,'Y'],[33,'2']]
+trip_res_alleles = [[9,'T'],[31,'Y'],[33,'2']]
 
 for column in data_plot.columns:
     if '|||' in column:
@@ -94,7 +94,7 @@ for column in data_plot.columns:
     else:
         parameters.append(column)
         
-print('Tripple resistant genotype: ' + trip_res_genotypes)
+print('Tripple resistant genotype: ' + trip_res_genotypes[0])
 
 #%%
 #Plot all genotypes
@@ -156,25 +156,40 @@ data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
 
+color_pallete = sns.color_palette("husl",len(data_plot_melt.ifr.unique()))[:len(data_plot_melt.ifr.unique())]
 plot = sns.relplot(data = data_plot_melt, 
             x = 'year',
             y = 'freq',
-            col = 'ifr',
+            col = 'prmc_size',
             row = 'beta',
-            hue = 'prmc_size',
-            style = 'prmc_size',
+            hue = 'ifr',
+            # style = 'prmc_size',
             kind = "line",
             ci = "sd",
             palette=sns.color_palette("husl",len(data_plot_melt.prmc_size.unique()))[:len(data_plot_melt.prmc_size.unique())],
             # height = a4_dims[1], aspect = 1.5
             )
 
+for ax in plot.axes.flatten():
+    beta = float(ax.get_title().split(' | ')[0].split(' = ')[1])
+    prmc_size = float(ax.get_title().split(' | ')[1].split(' = ')[1])
+    data_res = data_plot_melt[(data_plot_melt.beta == beta ) & (data_plot_melt.prmc_size == prmc_size)
+                                       & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
+
+    data_res_freq = data_res.groupby(['year','ifr']).freq.mean()
+    
+    for index,ifr in enumerate(data_res.ifr.unique()):
+        xi = data_res.year.unique()
+        yi = data_res_freq.xs(ifr, level=1, drop_level=False).values
+        x_res = np.interp(0.010, yi, xi, period = np.inf)
+        ax.axhline(y=0.010, ls='--', lw=2, color='red')  
+        ax.axvline(x = x_res, ls='--', lw=2, color=color_pallete[index]) 
+        
 plot.set(xlim=(5, 20))
 plot.set(ylim=(0, 0.015))
 plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
-plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
 
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple.png", dpi=300)
 
@@ -184,6 +199,7 @@ data_plot_melt = data_plot[data_plot.prmc_size == 80].melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
 
+color_pallete = sns.color_palette("husl",len(data_plot_melt.ifr.unique()))[:len(data_plot_melt.ifr.unique())]
 plot = sns.relplot(data = data_plot_melt, 
             x = 'year',
             y = 'freq',
@@ -196,12 +212,24 @@ plot = sns.relplot(data = data_plot_melt,
             # palette=sns.color_palette("husl",len(data_plot_melt.prmc_size.unique()))[:len(data_plot_melt.prmc_size.unique())],
             # height = a4_dims[1], aspect = 1.5
             )
+for index,ax in enumerate(plot.axes.flatten()):
+    beta = float(ax.get_title().split(' | ')[0].split(' = ')[1])
+    ifr = float(ax.get_title().split(' | ')[1].split(' = ')[1])
+    data_res = data_plot_melt[(data_plot_melt.beta == beta ) & (data_plot_melt.ifr == ifr)
+                                       & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
 
+    data_res_freq = data_res.groupby(['year']).freq.mean()
+    xi = data_res.year.unique()
+    yi = data_res_freq
+    # sns.lineplot(data = data_res_freq, x=xi, y=yi, ax=ax, color='red', lw=2,ls='--')
+    x_res = np.interp(0.010, yi, xi, period = np.inf)
+    ax.axvline(x = x_res, ls='--', lw=2, color='red')
+    ax.axhline(y=0.010, ls='--', lw=2, color='red') 
+    
 plot.set(xlim=(5, 20))
 plot.set(ylim=(0, 0.015))
 plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
-plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-80.png", dpi=300)
@@ -215,6 +243,7 @@ data_plot_melt = data_plot[data_plot.prmc_size == 80].melt([*parameters
                                   ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
 
+color_pallete = sns.color_palette("husl",len(data_plot_melt.ifr.unique()))[:len(data_plot_melt.ifr.unique())]
 plot = sns.relplot(data = data_plot_melt, 
             x = 'year',
             y = 'freq',

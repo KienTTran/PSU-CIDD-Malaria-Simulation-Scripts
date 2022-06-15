@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from itertools import combinations
 import yaml
 
-exp_number = 11
+exp_number = 13
 
 a4_dims = (11.69, 8.27)
 
@@ -94,7 +94,6 @@ for column in data_plot.columns:
         
 print(all_genotypes)
 
-#%%
 observe_index = 6
 observe_genotype = all_genotypes[observe_index]
 
@@ -108,7 +107,7 @@ for index,locus in enumerate(mask):
 loci_3 = random.sample(masked_loci,3)
 loci_3_all = list(combinations(masked_loci, 3)) 
 
-loci_3 = [4,31,33]
+loci_3 = [9,31,33]
 
 loci_2 = list(combinations(loci_3, 2))  
 allele_map = {}
@@ -163,10 +162,11 @@ Psi_ijk = data_plot[ld_columns[6]]
 C_ij = Psi_ij - p_i * p_j
 C_jk = Psi_jk - p_j * p_k
 C_ik = Psi_ik - p_i * p_k
+C_ijk = Psi_ijk - p_i*p_j*p_k
 data_plot['ld-ij'] = C_ij
 data_plot['ld-jk'] = C_jk
 data_plot['ld-ik'] = C_ik
-data_plot['ld-ijk'] = Psi_ijk - p_i*p_j*p_k
+data_plot['ld-ijk'] = C_ijk
 data_plot['ld'] = Psi_ijk - (p_i * C_jk) - (p_j * C_ik) - (p_k * C_ij) - p_i*p_j*p_k
 # data_plot['ld'] = data_plot[all_genotypes[observe_index]] - (p_i * C_jk) - (p_j * C_ik) - (p_k * C_ij) - p_i*p_j*p_k
 # print("Genotype " + str(index) + " LD = " 
@@ -179,13 +179,19 @@ data_plot['ld'] = Psi_ijk - (p_i * C_jk) - (p_j * C_ik) - (p_k * C_ij) - p_i*p_j
 
 loci_3_str = '-'.join([str(elem) for elem in loci_3])
 
+allele_3 = []
+for locus in loci_3:
+    allele_3.append(observe_genotype[locus])
+    
+allele_3_str = '-'.join([str(elem) for elem in allele_3])
+
 plot = sns.relplot(data = data_plot, 
             x = 'year',
             y = 'ld',
             col = 'ifr',
             row = 'beta',
             hue = 'prmc_size',
-            style = "prmc_size",
+            # style = "prmc_size",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.prmc_size.unique()))[:len(data_plot.prmc_size.unique())],
@@ -193,23 +199,23 @@ plot = sns.relplot(data = data_plot,
             )
 
 # plot.set(xlim=(0, 30))
-# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+plot.set(ylim=(-0.05, 0.05))
 # plot.set(xticks=range(0,30,5))
-# plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
-for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
-    ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
+plot.set(yticks=np.arange(-0.05,0.05,0.025))
+# for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
+#     ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + ".png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + ".png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
             x = 'year',
             y = 'ld-ij',
-            col = 'prmc_size',
+            col = 'ifr',
             row = 'beta',
-            hue = 'ifr',
-            style = "prmc_size",
+            hue = 'prmc_size',
+            # style = "prmc_size",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -222,16 +228,16 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-IJ')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "-IJ.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IJ.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
             x = 'year',
             y = 'ld-jk',
-            col = 'prmc_size',
+            col = 'ifr',
             row = 'beta',
-            hue = 'ifr',
-            style = "prmc_size",
+            hue = 'prmc_size',
+            # style = "prmc_size",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -244,16 +250,16 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-JK')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "-JK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-JK.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
             x = 'year',
             y = 'ld-ik',
-            col = 'prmc_size',
+            col = 'ifr',
             row = 'beta',
-            hue = 'ifr',
-            style = "prmc_size",
+            hue = 'prmc_size',
+            # style = "prmc_size",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -266,16 +272,16 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.1) 
 plot.fig.suptitle('LD-IK')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "-IK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IK.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
             x = 'year',
             y = 'ld-ijk',
-            col = 'prmc_size',
+            col = 'ifr',
             row = 'beta',
-            hue = 'ifr',
-            style = "prmc_size",
+            hue = 'prmc_size',
+            # style = "prmc_size",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -289,7 +295,7 @@ plot = sns.relplot(data = data_plot,
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-IJK')
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "-IJK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IJK.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -298,7 +304,7 @@ plot = sns.relplot(data = data_plot,
             col = 'prmc_size',
             row = 'beta',
             hue = 'ifr',
-            style = "ifr",
+            # style = "ifr",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -306,14 +312,15 @@ plot = sns.relplot(data = data_plot,
             )
 
 # plot.set(xlim=(0, 30))
-# plot.set(ylim=(np.min(data_plot['ld']), np.max(data_plot['ld'])))
+plot.set(ylim=(-0.05, 0.05))
 # plot.set(xticks=range(0,30,5))
+plot.set(yticks=np.arange(-0.05,0.05,0.025))
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
     ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + ".png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + ".png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -322,7 +329,7 @@ plot = sns.relplot(data = data_plot,
             col = 'prmc_size',
             row = 'beta',
             hue = 'ifr',
-            style = "ifr",
+            # style = "ifr",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -335,7 +342,7 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-IJ')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "-IJ.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IJ.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -344,7 +351,7 @@ plot = sns.relplot(data = data_plot,
             col = 'prmc_size',
             row = 'beta',
             hue = 'ifr',
-            style = "ifr",
+            # style = "ifr",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -357,7 +364,7 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-JK')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "-JK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-JK.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -366,7 +373,7 @@ plot = sns.relplot(data = data_plot,
             col = 'prmc_size',
             row = 'beta',
             hue = 'ifr',
-            style = "ifr",
+            # style = "ifr",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -379,7 +386,7 @@ plot = sns.relplot(data = data_plot,
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.1) 
 plot.fig.suptitle('LD-IK')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "-IK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IK.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -388,7 +395,7 @@ plot = sns.relplot(data = data_plot,
             col = 'prmc_size',
             row = 'beta',
             hue = 'ifr',
-            style = "ifr",
+            # style = "ifr",
             kind = "line",
             ci = 'sd',
             palette=sns.color_palette("husl",len(data_plot.ifr.unique()))[:len(data_plot.ifr.unique())],
@@ -402,7 +409,7 @@ plot = sns.relplot(data = data_plot,
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD-IJK')
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "-IJK.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "-IJK.png", dpi=300)
 plt.close()
 
 #%%
