@@ -66,7 +66,7 @@ if __name__=="__main__":
                 config_number += 1
                 config.append([beta, z, k])
                 
-    print("Total %d configs"%(config_number))
+    print("Total %d configs, %d runs"%(config_number,config_number * params['replicates'][0]))
     
     config_df = pd.DataFrame(config)
     config_df.columns = ['beta','z','kappa']
@@ -79,19 +79,22 @@ if __name__=="__main__":
         new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
         new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, params['ifr'][0]).tolist()
         new_data['mosquito_config']['prmc_size'] = (int)(params['prmc_size'][0])
-        new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = row.z
-        new_data['immune_system_information']['factor_effect_age_mature_immunity'] = row.kappa
+        new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(row.z)
+        new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(row.kappa)
         
         output_filename = config_folder_name + '/%d.yml'%(index)
         output_stream = open(output_filename, 'w');
         yaml.dump(new_data, output_stream); 
-        output_stream.close();                  
+        output_stream.close();              
+        print(output_filename)
             
     with open(r"submit_all_jobs.template", "r") as old_file:
         with open(r"submit_all_jobs.pbs", "w") as new_file:
             for line in old_file:
-                if '#REPLICATES#' in line:
+                if '#TOTAL_CONFIGS#' in line:
                     new_file.writelines('TO=' + str(len(config_df) - 1) + "\n")
+                elif '#REPLICATES#' in line:
+                    new_file.writelines('REP=' + str(params['replicates'][0]) + "\n")                    
                 else:
                     new_file.writelines(line)
             

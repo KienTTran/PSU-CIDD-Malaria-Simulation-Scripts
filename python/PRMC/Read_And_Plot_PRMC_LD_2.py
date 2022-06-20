@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from itertools import combinations
 import yaml
 
-exp_number = 13
+exp_number = 12
 
 a4_dims = (11.69, 8.27)
 
@@ -94,7 +94,7 @@ for column in data_plot.columns:
         
 print(all_genotypes)
 
-observe_index = 6
+observe_index = 23
 observe_genotype = all_genotypes[observe_index]
 
 mask = data_plot['mutation_mask'][0]
@@ -199,14 +199,38 @@ plot = sns.relplot(data = data_plot,
             )
 
 # plot.set(xlim=(0, 30))
-plot.set(ylim=(-0.05, 0.05))
+# plot.set(ylim=(-0.05, 0.05))
 # plot.set(xticks=range(0,30,5))
-plot.set(yticks=np.arange(-0.05,0.05,0.025))
+# plot.set(yticks=np.arange(-0.05,0.05,0.025))
 # for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
 #     ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD')
 plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + ".png", dpi=300)
+plt.close()
+
+plot = sns.relplot(data = data_plot, 
+            x = 'year',
+            y = 'ld',
+            col = 'ifr',
+            row = 'beta',
+            hue = 'prmc_size',
+            # style = "prmc_size",
+            kind = "line",
+            ci = 'sd',
+            palette=sns.color_palette("husl",len(data_plot.prmc_size.unique()))[:len(data_plot.prmc_size.unique())],
+            # height = a4_dims[1], aspect = 1.5
+            )
+
+# plot.set(xlim=(0, 30))
+plot.set(ylim=(-0.025, 0.025))
+# plot.set(xticks=range(0,30,5))
+plot.set(yticks=np.arange(-0.025,0.025,0.0125))
+# for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
+#     ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
+plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
+plot.fig.suptitle('LD')
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_ifr_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "_Detail.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 
@@ -312,15 +336,15 @@ plot = sns.relplot(data = data_plot,
             )
 
 # plot.set(xlim=(0, 30))
-plot.set(ylim=(-0.05, 0.05))
+plot.set(ylim=(-0.025, 0.025))
 # plot.set(xticks=range(0,30,5))
-plot.set(yticks=np.arange(-0.05,0.05,0.025))
+plot.set(yticks=np.arange(-0.025,0.025,0.0125))
 # plot.set(yticks=np.arange(np.min(data_plot['ld']), np.max(data_plot['ld']),0.5))
 for ax,beta,prmc_size in zip(plot.axes.flat,data_plot.beta.unique(),data_plot.prmc_size.unique()):
     ax.set_title('beta: %.2f prmc_size: %.2f'%(beta,prmc_size),y=0.7)
 plt.subplots_adjust(hspace = 0.05, wspace = 0.05)
 plot.fig.suptitle('LD')
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + ".png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_LD_2_beta_prmc_size_" + str(observe_index) + '_' + str(loci_3_str) + "_" + str(allele_3_str) + "_Detail.png", dpi=300)
 plt.close()
 
 plot = sns.relplot(data = data_plot, 

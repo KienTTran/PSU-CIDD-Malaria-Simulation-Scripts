@@ -23,8 +23,8 @@ get_job_count(){
 COUNTER=$(get_job_count)
 
 FROM=0
-TO=#REPLICATES#
-REP=10
+TO=#TOTAL_CONFIGS#
+REP=#REPLICATES#
 
 for i in `seq $FROM $TO`;do
 
