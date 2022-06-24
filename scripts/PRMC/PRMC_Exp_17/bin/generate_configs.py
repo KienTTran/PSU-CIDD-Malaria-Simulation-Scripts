@@ -19,11 +19,14 @@ def read_parameters():
         
 if __name__=="__main__":
     config_folder_name = "generated_inputs"
+    exp_folder_name = ""
     file_path = str(Path.cwd())
     if "\\" in file_path:
-        folder = file_path.split("\\")[-1]  
+        folder = file_path.split("\\")[-1]
+        exp_folder_name = file_path.split("\\")[-2]
     else:
         folder = file_path.split("/")[-1]
+        exp_folder_name = file_path.split("/")[-2]
     config_path = os.path.join(Path.cwd(), config_folder_name)
     if not os.path.exists(config_folder_name):
         os.mkdir(config_path)
@@ -88,8 +91,11 @@ if __name__=="__main__":
                     new_file.writelines('TO=' + str(len(config_df) - 1) + "\n")
                 else:
                     new_file.writelines(line)
-            
-        
-    
-                
-            
+                   
+    with open(r"job_template.template", "r") as old_file:
+        with open(r"job_template.pbs", "w") as new_file:
+            for line in old_file:
+                if '#JOB_NAME#' in line:
+                    new_file.writelines('#PBS -N ' + str(exp_folder_name) + "\n")
+                else:
+                    new_file.writelines(line)

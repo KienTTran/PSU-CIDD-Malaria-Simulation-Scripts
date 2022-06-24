@@ -15,9 +15,9 @@ import seaborn as sns
 
 a4_dims = (11.7, 8.27)
 
-exp_number = 12
+exp_number = 16
 
-local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
+local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
 local_path_bin = local_path + "\\bin"
 
@@ -77,33 +77,35 @@ all_genotypes = []
 trip_res_genotypes = []
 non_trip_res_genotypes = []
 parameters = []
-        
-trip_res_alleles = [[9,'T'],[31,'Y'],[33,'2']]
-
+    
+trip_res_alleles = [[4,'Y'],[5,'Y'],[6,'1'],[9,'T'],[31,'Y'],[33,'2']]
+trip_res_alleles = [[4,'Y'],[5,'Y'],[6,'1'],[9,'T'],[31,'Y'],[33,'2']]
+ 
 for column in data_plot.columns:
     if '|||' in column:
         all_genotypes.append(column)
-        print(column)
-        if column[trip_res_alleles[0][0]] == trip_res_alleles[0][1] \
-        and column[trip_res_alleles[1][0]] == trip_res_alleles[1][1] \
-        and column[trip_res_alleles[2][0]] == trip_res_alleles[2][1] \
-        and data_plot[column].sum() != 0.0:
+        all_true = 0
+        for item in trip_res_alleles:
+            if column[item[0]] == item[1]:
+                all_true += 0
+            else:
+                all_true += 1
+        if all_true == 0 and data_plot[column].sum() != 0.0:
             trip_res_genotypes.append(column)    
         else:
             non_trip_res_genotypes.append(column)
     else:
         parameters.append(column)
         
-print('Tripple resistant genotype: ' + trip_res_genotypes[0])
-
+print('Triple resistant genotype: ' + trip_res_genotypes[0])
 #%%
 #Plot all genotypes
 data_plot_melt = data_plot.melt(id_vars=[*parameters
-                                         ], var_name='genotypes', value_name='vals')
+                                         ], var_name='genotypes', value_name='freq')
 
 plot = sns.relplot(data = data_plot_melt, 
-            x = 'month',
-            y = 'vals',
+            x = 'year',
+            y = 'freq',
             # col = 'cols',
             # row = 'beta',
             hue = 'genotypes',
@@ -114,44 +116,47 @@ plot = sns.relplot(data = data_plot_melt,
             height = a4_dims[1], aspect = 1.5
             )
 
-plot.set(xlim=(0, 360))
+plot.set(xlim=(0, 30))
 # plot.set(ylim=(0, 0.2))
-plot.set(xticks=range(0,360,12))
+plot.set(xticks=range(0,30,2))
 # plot.set(yticks=np.arange(0,0.2,0.05))
-plot.set_xlabels('Months')
-plot.set_ylabels('Freq.')
-plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
+# plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
 plot.fig.subplots_adjust(bottom=0.1);    
 plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_all.png", dpi=600)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_all.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
-                                 ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
 
 plot = sns.relplot(data = data_plot_melt, 
             x = 'year',
             y = 'freq',
-            col = 'prmc_size',
-            row = 'beta',
-            hue = 'ifr',
-            style = 'prmc_size',
+            # col = 'cols',
+            # row = 'beta',
+            hue = 'genotypes',
+            style = 'genotypes',
             kind = "line",
             ci = "sd",
-            palette=sns.color_palette("husl",len(data_plot_melt.ifr.unique()))[:len(data_plot_melt.ifr.unique())],
+            palette=sns.color_palette("husl",len(data_plot_melt.genotypes.unique()))[:len(data_plot_melt.genotypes.unique())],
             # height = a4_dims[1], aspect = 1.5
             )
 
-# plot.set(xlim=(0, 360))
 plot.set(ylim=(0, 0.02))
-# plot.set(xticks=range(0,360,12))
 plot.set(yticks=np.arange(0,0.02,0.005))
+plot.set(xlim=(0, 30))
+plot.set(xticks=range(0,30,2))
+plot.map(plt.axhline, y=0.01, ls='--', linewidth=2, color='red')
+plot.fig.subplots_adjust(bottom=0.1);    
+plt.subplots_adjust(hspace = 0.2, wspace = 0.1) 
+
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_all_freq_0.01.png", dpi=300)
 plt.close()
+
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -174,7 +179,7 @@ for ax in plot.axes.flatten():
     beta = float(ax.get_title().split(' | ')[0].split(' = ')[1])
     prmc_size = float(ax.get_title().split(' | ')[1].split(' = ')[1])
     data_res = data_plot_melt[(data_plot_melt.beta == beta ) & (data_plot_melt.prmc_size == prmc_size)
-                                       & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
+                                        & (data_plot_melt['genotypes'] == trip_res_genotypes[0])]
 
     data_res_freq = data_res.groupby(['year','ifr']).freq.mean()
     
@@ -185,18 +190,18 @@ for ax in plot.axes.flatten():
         ax.axhline(y=0.010, ls='--', lw=2, color='red')  
         ax.axvline(x = x_res, ls='--', lw=2, color=color_pallete[index]) 
         
-plot.set(xlim=(5, 20))
+plot.set(xlim=(5, 30))
 plot.set(ylim=(0, 0.015))
-plot.set(xticks=range(5,20,2))
+plot.set(xticks=range(5,30,5))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple_beta_prmc_size.png", dpi=300)
 plt.close()
 #%%
 
 
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -232,18 +237,18 @@ for ax in plot.axes.flatten():
         ax.axhline(y=0.010, ls='--', lw=2, color='red')  
         ax.axvline(x = x_res, ls='--', lw=2, color=color_pallete[index]) 
         
-plot.set(xlim=(5, 20))
+plot.set(xlim=(5, 30))
 plot.set(ylim=(0, 0.015))
-plot.set(xticks=range(5,20,2))
+plot.set(xticks=range(5,30,5))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple_ifr_0.0_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple_ifr_0.0_0.2.png", dpi=300)
 plt.close()
 
 #%%
 
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -285,12 +290,12 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple_ifr_0.05_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple_ifr_0.05_0.2.png", dpi=300)
 plt.close()
 
 #%%
 
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -332,12 +337,12 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple_ifr_0.0_0.05_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple_ifr_0.0_0.05_0.2.png", dpi=300)
 plt.close()
 
 #%%
 
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot.melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -380,10 +385,10 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple_beta_0.08_0.7_ifr_0.0_0.05_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple_beta_0.08_0.7_ifr_0.0_0.05_0.2.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot[data_plot.prmc_size == 80].melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -423,10 +428,10 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size_80_0.0_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple-size_80_0.0_0.2.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 data_plot_melt = data_plot[data_plot.prmc_size == 120].melt([*parameters
                                  ,*non_trip_res_genotypes
                                 ],var_name='genotypes', value_name='freq')
@@ -469,10 +474,10 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size_120_0.0_0.2.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple-size_120_0.0_0.2.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 
 facet_kws={'sharey': True, 'sharex': False}
 
@@ -512,10 +517,10 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-80-beta-ifr.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple-size-80-beta-ifr.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 
 facet_kws={'sharey': True, 'sharex': False}
 
@@ -559,10 +564,10 @@ plot.set(xticks=range(5,20,2))
 plot.set(yticks=np.arange(0,0.015,0.005))
 plt.subplots_adjust(hspace = 0.1, wspace = 0.05)
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-beta-prmc_size-ifr.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple-size-beta-prmc_size-ifr.png", dpi=300)
 plt.close()
 #%%
-#Plot tripple resistant genotypes
+#Plot triple resistant genotypes
 
 facet_kws={'sharey': True, 'sharex': False}
 
@@ -604,5 +609,5 @@ for ax in plot.axes.flatten():
  
 # sns.move_legend(plot, "lower center", ncol = len(data_res.ifr.unique()))
 
-plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_tripple-size-80-beta.png", dpi=300)
+plot.savefig(local_path + "data_plot_exp_" + str(exp_number) + "_res_freq_triple-size-80-beta.png", dpi=300)
 plt.close()

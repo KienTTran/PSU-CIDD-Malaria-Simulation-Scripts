@@ -415,7 +415,7 @@ initial_parasite_info:
   #if location id is -1 all location will have the same initial parasites
   - location_id: -1
     parasite_info:
-      - aa_sequence: "||||NY1||KTHFI,x||||||FNMYRIPRPC|1"
+      - aa_sequence: "||||NY1||TTHFI,x||||||FNMYRIPRPC|1"
         prevalence: 0.05
       # - aa_sequence: "||||YY1||TTHFI,x||||||FNMYRIPRPC|1"
         # prevalence: 0.05
