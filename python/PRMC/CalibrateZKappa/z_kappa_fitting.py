@@ -9,9 +9,13 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-# data = pd.read_csv('data_details_0426.csv')
-data = pd.read_csv('data_dev_170622.csv')
-# data = pd.read_csv('data_0422.csv')
+exp_number = 15
+
+local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
+local_path_raw = local_path + "\\raw"
+local_path_bin = local_path + "\\bin"
+
+data = pd.read_csv(local_path + "data_dev_exp_" + str(exp_number) + ".csv")
 
 data['age2to10'] = data.age1/data.age9
 

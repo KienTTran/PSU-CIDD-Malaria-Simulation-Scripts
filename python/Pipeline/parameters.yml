@@ -1,5 +1,20 @@
-host: "submit.aci.ics.psu.edu"
-username: ktt5121
-key: ''
-build_sh_template: [build.sh.template,'True']
-build_pbs_template: [build.pbs.template,'True']
+cluster:
+    address: submit.aci.ics.psu.edu
+    username: ktt5121
+    key: 0
+    
+
+build:
+    workplace_dir: Github
+    project_dir: PSU-CIDD-Malaria-Simulation-Test
+    repo_url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
+    repo_branch: dev
+    sh_template: [build.sh.template,True]
+    # pbs_template: [build.pbs.template,True] #enable to schdule the build
+    
+run:
+    workplace_dir: work
+    project_dir: Pipeline_1
+    exe: MaSim
+    
+    
