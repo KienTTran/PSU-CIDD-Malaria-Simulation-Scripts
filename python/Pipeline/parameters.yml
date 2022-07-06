@@ -1,0 +1,5 @@
+host: "submit.aci.ics.psu.edu"
+username: ktt5121
+key: ''
+build_sh_template: [build.sh.template,'True']
+build_pbs_template: [build.pbs.template,'True']

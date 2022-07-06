@@ -1,0 +1,60 @@
+#!/bin/bash
+###### account to identify cluster
+#PBS -A mfb9_b_g_sc_default
+###### job name
+#PBS -N #buildscript#
+#
+###### number of nodes, processors per node
+#PBS -l nodes=1:ppn=1
+#
+###### memory per process
+#PBS -l pmem=1gb
+#
+###### max run time, job is killed when time runs out
+#PBS -l walltime=60:00
+#
+###### queue name???
+##PBS -q mfb9_b_g_sc_default
+#
+###### email notification for abort, begin, end of job
+##PBS -m abe
+##PBS -M merlinvn@gmail.com
+#
+###### output and error files
+#PBS -o #buildscript#.output
+#PBS -e #buildscript#.error
+#
+ 
+###### arguments for the executable
+ARGS=#buildscript#
+echo "#buildscript#"
+#
+###### change directory to avoid running directly in home, and  to specify output dir
+echo "Change to submission directory"
+cd $PBS_O_WORKDIR
+pwd
+echo ""
+#
+echo ------------------------------------------------------
+echo -n 'Job is running on node '; cat $PBS_NODEFILE
+echo ------------------------------------------------------
+echo PBS: qsub is running on $PBS_O_HOST
+echo PBS: originating queue is $PBS_O_QUEUE
+echo PBS: executing queue is $PBS_QUEUE
+echo PBS: job ID is $PBS_JOBID
+echo PBS: working directory is $PBS_O_WORKDIR
+echo PBS: execution mode is $PBS_ENVIRONMENT
+echo PBS: job identifier is $PBS_JOBID
+echo PBS: job name is $PBS_JOBNAME
+echo PBS: node file is $PBS_NODEFILE
+echo PBS: current home directory is $PBS_O_HOME
+echo PBS: PATH = $PBS_O_PATH
+echo ------------------------------------------------------
+#
+###### Run the program
+echo "run the program"
+sh $ARGS
+echo "end program at" 
+date
+exit
+

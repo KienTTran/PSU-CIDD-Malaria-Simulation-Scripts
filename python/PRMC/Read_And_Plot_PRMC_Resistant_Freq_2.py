@@ -15,7 +15,7 @@ import seaborn as sns
 
 a4_dims = (11.7, 8.27)
 
-exp_number = 16
+exp_number = 17
 
 local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -80,8 +80,8 @@ non_trip_res_genotypes = []
 parameters = []
     
 trip_res_alleles = [
-                    # [[4,'Y'],[5,'Y'],[6,'1'],[9,'T'],[31,'Y'],[33,'2']], #triple resistant DHA-PPQ-AQ
-                    [[4,'N'],[5,'F'],[6,'1'],[9,'K'],[31,'Y'],[33,'2']] #triple resistant DHA-PPQ-LUM
+                    [[4,'Y'],[5,'Y'],[6,'1'],[9,'T'],[31,'Y'],[33,'2']], #triple resistant DHA-PPQ-AQ
+                    # [[4,'N'],[5,'F'],[6,'1'],[9,'K'],[31,'Y'],[33,'2']] #triple resistant DHA-PPQ-LUM
                     # [[31,'Y'],[33,'2']], #double resistant DHA-PPQ                                        
                     # [[4,'Y'],[5,'Y'],[6,'1'],[9,'T'],[31,'Y']], #double resistant ASAQ                    
                     # [[4,'N'],[5,'F'],[6,'1'],[9,'K'],[31,'Y']], #double resistant AL
