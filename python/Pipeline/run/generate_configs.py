@@ -7,28 +7,37 @@ import pandas as pd
 import yaml
 import math
 import copy
+import sys
 
-def read_parameters():
+def read_parameters(parameter):
     params = {}
-    print("Reading parameters.yml")
-    with open(r'parameters.yml') as file:
+    print("Reading " + parameter)
+    with open(parameter,'r') as file:
         documents = yaml.full_load(file)
         for item, doc in documents.items():
             params[item] = doc
     return params
         
-if __name__=="__main__":
-    config_folder_name = "generated_inputs"
+if __name__=="__main__":    
+    parameter_file = str(sys.argv[1])
+    config_file = str(sys.argv[2])
+    job_template_file = str(sys.argv[3])
+    submit_job_template_file = str(sys.argv[4])    
+    config_folder = str(sys.argv[5])
+    job_name = str(sys.argv[6])
+    job_exe = str(sys.argv[7])
+    username = str(sys.argv[8])
+    
     file_path = str(Path.cwd())
     if "\\" in file_path:
         folder = file_path.split("\\")[-1]  
     else:
         folder = file_path.split("/")[-1]
-    config_path = os.path.join(Path.cwd(), config_folder_name)
-    if not os.path.exists(config_folder_name):
+    config_path = os.path.join(Path.cwd(), config_folder)
+    if not os.path.exists(config_folder):
         os.mkdir(config_path)
     print("Will generate configs to folder: " + config_path)
-    params = read_parameters()
+    params = read_parameters(parameter_file)
     print(params)
      
     #Calculate beta log10
@@ -44,7 +53,7 @@ if __name__=="__main__":
     params['z'] = np.arange(params['z'][0],params['z'][1],params['z'][2])
         
     #generate YML
-    stream = open('input.yml', 'r');
+    stream = open(config_file, 'r');
     data = yaml.full_load(stream);
     stream.close();
     
@@ -56,67 +65,60 @@ if __name__=="__main__":
     data['starting_date'] = str(params['start_year'][-1])+'/1/1';
     data['ending_date'] = str(params['end_year'][-1])+'/1/1';
     data['start_of_comparison_period']= str(params['start_year'][-1])+'/1/1';   
-
-    all_value_list = []
-    config_list = []
-    for index,key in enumerate(params):
-        print(index,key,params[key])
-        if len(all_value_list) == 0:
-            for value in params[key]:
-                all_value_list.append(str(value))
-        else:
-            temp = []
-            for line in all_value_list:
-                for value in params[key]:
-                    temp.append(line + "#" + str(value))
-            all_value_list = temp
-            
-    for index,line in enumerate(all_value_list):
-        print(line)
-        config_list.append(line.split("#"))
-        
-    config_df = pd.DataFrame(config_list)
-    
-    
-    # config_df = pd.DataFrame()
-    # config = []
-    # config_number = 0
-    # for beta in params['beta']:
-    #     for z in params['z']:
-    #         for k in params['kappa']:                
-    #             config_number += 1
-    #             config.append([beta, z, k])
+  
+    config_df = pd.DataFrame()
+    config = []
+    config_number = 0
+    for beta in params['beta']:
+        for z in params['z']:
+            for k in params['kappa']:                
+                config_number += 1
+                config.append([beta, z, k])
                 
-    # print("Total %d configs, %d runs"%(config_number,config_number * params['replicates'][0]))
+    print("Total %d configs, %d runs"%(config_number,config_number * params['replicates'][0]))
     
-    # config_df = pd.DataFrame(config)
-    # config_df.columns = ['beta','z','kappa']
+    config_df = pd.DataFrame(config)
+    config_df.columns = ['beta','z','kappa']
     
-    # config_df.to_csv("configs.csv",index=True,index_label="Index")
+    config_df.to_csv("configs.csv",index=True,index_label="Index")
         
-    # df = config_df.reset_index()  # make sure indexes pair with number of rows
-    # for index, row in df.iterrows():
-    #     new_data = copy.deepcopy(data)
-    #     new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
-    #     new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, params['ifr'][0]).tolist()
-    #     new_data['mosquito_config']['prmc_size'] = (int)(params['prmc_size'][0])
-    #     new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(row.z)
-    #     new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(row.kappa)
-        
-    #     output_filename = config_folder_name + '/%d.yml'%(index)
-    #     output_stream = open(output_filename, 'w')
-    #     yaml.dump(new_data, output_stream)
-    #     output_stream.close()   
+    df = config_df.reset_index()  # make sure indexes pair with number of rows
+    try:
+        for index, row in df.iterrows():
+            new_data = copy.deepcopy(data)
+            new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
+            new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, params['ifr'][0]).tolist()
+            new_data['mosquito_config']['prmc_size'] = (int)(params['prmc_size'][0])
             
-    # with open(r"submit_all_jobs.template", "r") as old_file:
-    #     with open(r"submit_all_jobs.pbs", "w") as new_file:
-    #         for line in old_file:
-    #             if '#TOTAL_CONFIGS#' in line:
-    #                 new_file.writelines('TO=' + str(len(config_df) - 1) + "\n")
-    #             elif '#REPLICATES#' in line:
-    #                 new_file.writelines('REP=' + str(params['replicates'][0]) + "\n")                    
-    #             else:
-    #                 new_file.writelines(line)
+            output_filename = config_folder + '/%d.yml'%(index)
+            output_stream = open(output_filename, 'w')
+            yaml.dump(new_data, output_stream)
+            output_stream.close()
+    except Exception as e:
+        print("Generate input error " + str(e) + ', please check and rerun')
+        exit(0)
+        
+    #Change job_template file
+    f = open(job_template_file,'r')
+    template = f.read()
+    f.close()
+    new_file_data = template.replace("#JOB_NAME#", job_name + "\n")
+    new_file_data = new_file_data.replace("#JOB_EXE#", job_exe + "\n")
+    
+    f = open(job_template_file.replace('.template','.pbs'),'w')
+    f.write(new_file_data)
+    f.close()            
+        
+    #Change submit_all_jobs file
+    f = open(submit_job_template_file,'r')
+    template = f.read()
+    f.close()
+    new_file_data = template.replace("#USERNAME#",username + "\n")
+    new_file_data = new_file_data.replace("#TOTAL_CONFIGS#",str(len(config_df) - 1) + "\n")
+    new_file_data = new_file_data.replace("#REPLICATES#",str(params['replicates'][0]) + "\n")
+    f = open(submit_job_template_file.replace('.template','.pbs'),'w')
+    f.write(new_file_data)
+    f.close()  
             
         
     

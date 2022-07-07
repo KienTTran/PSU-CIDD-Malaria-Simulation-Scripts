@@ -31,10 +31,8 @@
 #  output
 #  
 
-
-
 PROGDIR=../bin
-PROG=$PROGDIR/MaSim
+PROG=$PROGDIR/#JOB_EXE#
 ###### arguments for the executable
 ARGS="-i $PROGDIR/generated_inputs/${INPUT_FILE} -j ${NUMBER_ARG}"
 echo ""
