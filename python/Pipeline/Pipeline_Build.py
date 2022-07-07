@@ -40,7 +40,7 @@ def cmd_build(cluster_src_path, build_script):
 client = SSHClient()
 
 #Read params
-params = client.read_parameters('parameters.yml')
+params = client.read_parameters('pipeline.yml')
    
 #Cluster info
 cluster_address = params['cluster']['address']
@@ -60,51 +60,54 @@ print('Build workplace path: ' + cluster_workplace_path)
 print('Build project source path: ' + cluster_src_path)
 print('Repo path: ' + repo_url + ' branch: ' + repo_branch)
 
-#Run info
+#Build info
+build_local_dir = params['build']['local_dir']
 build_sh_template = params['build']['sh_template']
+build_sh_file = build_sh_template[0].split('.template')[0]
 build_pbs_template = params['build']['pbs_template'] if ('pbs_template' in params['build']) == True else ''
-build_sh_file = 'build.sh'
-print('Build file: ' + build_sh_file)
+build_sh_path = os.path.join(os.path.join(os.getcwd(),build_local_dir),'build.sh')
+print('Build script path: ' + build_sh_path)
 if build_pbs_template != '':
-    build_pbs_file = 'build.pbs'
-    print('Schedule build file: ' + build_pbs_file)
+    build_pbs_file = build_pbs_template[0].split('.template')[0]
+    build_pbs_path = os.path.join(os.path.join(os.getcwd(),build_local_dir),'build.pbs')
+    print('Schedule build path: ' + build_pbs_path)
  
 print('Preparing files from templates')
 #Make .sh script
-f = open(build_sh_template[0],'r')
+f = open(os.path.join(os.path.join(os.getcwd(),build_local_dir),build_sh_template[0]),'r')
 template = f.read()
 f.close()
 build_sh_file_data = template.replace("#username#",cluster_username)
-if os.path.exists(build_sh_file):
+if os.path.exists(build_sh_path):
     print('Build file exists')
     if build_sh_template[1] == True:
         print('Overwriting build script')
-        f = open(build_sh_file,'w')
+        f = open(build_sh_path,'w')
         f.write(build_sh_file_data)
         f.close()
 else:
     print('Writing build script')
-    f = open(build_sh_file,'w')
+    f = open(build_sh_path,'w')
     f.write(build_sh_file_data)
     f.close()
 print('Build script done')
     
 #Make pbs script
 if build_pbs_template != '':
-    f = open(build_pbs_template[0],'r')
+    f = open(os.path.join(os.path.join(os.getcwd(),build_local_dir),build_pbs_template[0]),'r')
     template = f.read()
     f.close()
     build_pbs_file_data = template.replace("#buildscript#",build_sh_file)
-    if os.path.exists(build_pbs_file):
+    if os.path.exists(build_pbs_path):
         print('PBS file exists')
         if build_pbs_template[1] == True:
             print('Overwriting PBS file')
-            f = open(build_pbs_file,'w')
+            f = open(build_pbs_path,'w')
             f.write(build_pbs_file_data)
             f.close()
     else:
         print('Writing PBS file')
-        f = open(build_pbs_file,'w')
+        f = open(build_pbs_path,'w')
         f.write(build_pbs_file_data)
         f.close()
     print('Build schedule script done')
@@ -124,7 +127,6 @@ except IOError:
     client.run_cmd(cmd_git_pull(cluster_workplace_path, cluster_project_dir, repo_url, repo_branch))
 
 #Upload sh script
-local_script_path = os.path.join(os.getcwd(),build_sh_file)
 cluster_script_path = cluster_src_path + "/" + build_sh_file
 #Check if remote sh file exists
 sftp.chdir(cluster_src_path)
@@ -133,14 +135,13 @@ try:
     print('Build script exists on server')
     if build_sh_template[1] == True:
         print('Overwriting build script on server')
-        sftp.put(local_script_path, cluster_script_path)
+        sftp.put(build_sh_path, cluster_script_path)
 except IOError:
     print('Copying build script to server')
-    sftp.put(local_script_path, cluster_script_path)
+    sftp.put(build_sh_path, cluster_script_path)
 
 #Upload pbs script
 if build_pbs_template != '':
-    local_script_path = os.path.join(os.getcwd(), build_pbs_file)
     cluster_script_path = cluster_src_path + "/" + build_pbs_file
     #Check if remote pbs file exists 
     try:
@@ -148,10 +149,10 @@ if build_pbs_template != '':
         print('PBS script exists on server')
         if build_pbs_template[1] == True:
             print('Overwriting PBS file on server')
-            sftp.put(local_script_path, cluster_script_path)
+            sftp.put(build_pbs_path, cluster_script_path)
     except IOError:
         print('Copying PBS file to server')
-        sftp.put(local_script_path, cluster_script_path)
+        sftp.put(build_pbs_path, cluster_script_path)
 
 client.run_cmd(cmd_build(cluster_src_path,build_sh_file))
 

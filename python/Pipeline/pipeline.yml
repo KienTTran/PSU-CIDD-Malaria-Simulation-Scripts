@@ -1,0 +1,27 @@
+cluster:
+    address: submit.aci.ics.psu.edu
+    username: ktt5121
+    key: 0    
+
+build: #dir are on cluster
+    local_dir: build 
+    workplace_dir: Github
+    project_dir: PSU-CIDD-Malaria-Simulation-Test
+    repo_url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
+    repo_branch: dev
+    sh_template: [build.sh.template,True] #Must have .template after file name
+    # pbs_template: [build.pbs.template,True] #enable to schdule the build
+    
+run:
+    local_dir: run #On local machine
+    workplace_dir: work #On cluster
+    project_dir: Pipeline_1
+    exe: MaSim
+    generate_file: generate_configs.py
+    parameter_file: parameters.yml
+    config_file: input.yml #Input template for exe file
+    job_template_file: job_template.template #Must have .template after file name
+    submit_job_template_file: submit_all_jobs.template #Must have .template after file name
+    
+    
+    
