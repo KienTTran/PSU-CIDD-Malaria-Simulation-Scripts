@@ -16,22 +16,25 @@ import os
 from PipelineClient import PipelineClient
                         
 
-def cmd_generate_build_script(working_path,script_name,parameters):
+def cmd_generate(working_path,script_name,parameters):
     return  'cd ' + working_path + \
             '; python3 ' + script_name + ' ' + parameters
             
-def cmd_git_pull(cluster_home_path, cluster_project_dir, repo_url, repo_branch):
-    return  'cd ' + cluster_home_path + \
-            '; git clone ' + repo_url + " " + cluster_project_dir + " -b " + repo_branch + \
-            '; ls -l ' + cluster_project_dir + \
+def cmd_git_pull(project_path, repo_url, repo_branch):
+    project_name = project_path.split('/')[-1]
+    project_parent_path = project_path.replace(project_name,'')
+    return  'cd ' + project_parent_path + \
+            '; git clone ' + repo_url + " " + project_name + " -b " + repo_branch + \
+            '; ls -l ' + project_name + \
+            '; cd ' + project_name + \
             '; git checkout ' + repo_branch
             
-def cmd_git_checkout(porject_dir, repo_branch):
-    return  'cd ' + porject_dir + \
+def cmd_git_checkout(project_path, repo_branch):
+    return  'cd ' + project_path + \
             '; git checkout ' + repo_branch
                 
-def cmd_build(cluster_project_path, build_script_name, parameters):
-    return  'cd ' + cluster_project_path + \
+def cmd_build(project_path, build_script_name, parameters):
+    return  'cd ' + project_path + \
             '; pwd' + \
             '; chmod +x ' + build_script_name + \
             '; sh ' + build_script_name + ' ' + parameters
@@ -42,31 +45,45 @@ client = PipelineClient()
 #Read params
 params = client.read_parameters('pipeline.yml')
    
-#Cluster info
+#Local info
+local_build_dir = params['build']['local']
+local_build_path = os.path.join(os.getcwd(),local_build_dir)
+
+#ssh info
 cluster_address = params['ssh']['address']
 cluster_username = params['ssh']['username']
 cluster_key = params['ssh']['key']
 cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
 print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
-cluster_workplace_dir = params['build']['remote']['workplace_folder']
-cluster_project_dir = params['build']['remote']['project_folder']
-cluster_workplace_path = os.path.join(cluster_home_path,cluster_workplace_dir)
-cluster_project_path = os.path.join(cluster_workplace_path,cluster_project_dir)
+
+#Script info
 script_name = params['build']['script']['name']
+if script_name == None:
+    script_name = 'build.sh'
+script_working_dir = params['build']['script']['folder']
+script_working_path = os.path.join(cluster_home_path,script_working_dir)
 script_parameters = params['build']['script']['parameters']
 script_parameter_str = ''
 if script_parameters != None:
     for parameter in script_parameters:
         script_parameter_str += ' ' + str(parameter)
-            
+
+#Cluster info
+cluster_project_dir = params['project']['folder']
+cluster_project_path = os.path.join(cluster_home_path,cluster_project_dir)
+cluster_script_path = script_working_path + "/" + script_name
+cluster_target = params['project']['exe']
+cluster_target_path = os.path.join(cluster_project_path,cluster_target)
+print('Cluster project path: ' + cluster_project_path)
+print('Cluster target path: ' + cluster_target_path)
+
+#Repo info            
 repo_url = params['build']['repo']['url']
 repo_branch = params['build']['repo']['branch']
-print('CLuster workplace path: ' + cluster_workplace_path)
-print('Cluster project source path: ' + cluster_project_path)
 print('Repo path: ' + repo_url + ' branch: ' + repo_branch)
-    
-print('Generating build script')
-generator_script_name = params['build']['generator']['script']
+
+#Generator info   
+generator_script_name = params['build']['generator']['name']
 generator_script_dir = params['build']['generator']['folder']
 generator_script_parameters = params['build']['generator']['parameters']
 generator_script_parameter_str = ''
@@ -74,9 +91,30 @@ if generator_script_parameters != None:
     for parameter in generator_script_parameters:
         generator_script_parameter_str += ' ' + str(parameter)
     generator_script_parameter_str += ' ' + script_name
-client.run_cmd_locally(cmd_generate_build_script(generator_script_dir,generator_script_name,generator_script_parameter_str))
-local_script_path = os.path.join(os.path.join(os.getcwd(),generator_script_dir),script_name)
-print('Generated build script: ' + local_script_path)
+        
+#Check local script or generator available
+build_using_local = script_name != None
+build_using_generator = generator_script_name != None
+if (build_using_generator and build_using_local) or (build_using_generator and not build_using_local):
+    if not build_using_local:
+        print('Only generator script is in input, will generate build script with default name: ' + script_name)
+    else:
+        print('Both local and generator scripts are in input, will use generator to generate build script with name ' + script_name) 
+    client.run_cmd_locally(cmd_generate(generator_script_dir,generator_script_name,generator_script_parameter_str))
+    local_script_path = os.path.join(os.path.join(os.getcwd(),generator_script_dir),script_name)
+elif build_using_local and not build_using_generator:
+    local_script_path = os.path.join(local_build_path,script_name)
+    if os.path.exists(local_script_path):
+        print('Only local script is in input, will upload and use script: ' + script_name)
+    else:
+        print('Local script is in input, but does not exist, please check and run again')
+        exit(0)
+else:
+    print('Please supply at least local script or generator script to build')
+    exit(0)
+
+print('Local build script path: ' + local_script_path)
+print('Cluster build script path: ' + cluster_script_path)
 
 #Connect via SSH
 ssh,sftp = client.connect(cluster_address, cluster_username, cluster_key)
@@ -88,14 +126,20 @@ try:
     client.run_cmd_remotely(cmd_git_checkout(cluster_project_path, repo_branch))
 except IOError:
     print('Working source path does not exist, pull from Github')
-    client.run_cmd_remotely(cmd_git_pull(cluster_workplace_path, cluster_project_dir, repo_url, repo_branch))
+    client.mkdir_nested(cluster_project_path)
+    client.run_cmd_remotely(cmd_git_pull(cluster_project_path, repo_url, repo_branch))
     
 #Upload sh script
-cluster_script_path = cluster_project_path + "/" + script_name
-sftp.chdir(cluster_project_path)
+sftp.chdir(script_working_path)
 print('Writing build script on server')
 sftp.put(local_script_path, cluster_script_path)
 client.run_cmd_remotely(cmd_build(cluster_project_path,script_name,script_parameter_str))
+
+#Check after build
+if client.print_file_path_exist_remotely(cluster_target_path):
+    print('Target built successfully on cluster')
+else:
+    print('Error building target on cluster. Please check and try again')
 
 client.disconnect()
 

@@ -39,15 +39,49 @@ class PipelineClient():
         err = stderr.read().decode()
         if err:
             print(err)
-            exit(0)
             
-    def check_file_path_exists(self,file_path):
+    def print_path_exist_locally(self,file_path):
         if exists(file_path):
-            print("Outputs are good, continue")
+            print(file_path + ' exists')
         else:
-            print("Wrong outputs from script, please check and run again")
-            print("Expected output: " + file_path)
-            exit(0)
+            print(file_path + ' does not exist')
+            
+    def print_dir_path_exist_remotely(self,file_path):
+        try:
+            self.sftp.chdir(file_path) # sub-directory exists
+            print(file_path + ' exists')
+            return True
+        except IOError:
+            print(file_path + ' does not exist')
+            return False
+        
+    def print_file_path_exist_remotely(self,file_path):
+        try:
+            self.sftp.stat(file_path) # sub-directory exists
+            print(file_path + ' exists')
+            return True
+        except IOError:
+            print(file_path + ' does not exist')
+            return False
+            
+    def mkdir_nested(self, remote_directory):
+        """Change to this directory, recursively making new folders if needed.
+        Returns True if any folders were created."""
+        if remote_directory == '/':
+            # absolute path so change directory to root
+            self.sftp.chdir('/')
+            return
+        if remote_directory == '':
+            # top-level relative directory must exist
+            return
+        try:
+            self.sftp.chdir(remote_directory) # sub-directory exists
+        except IOError:
+            dirname, basename = os.path.split(remote_directory.rstrip('/'))
+            self.mkdir_nested(dirname) # make parent directories
+            self.sftp.mkdir(basename) # sub-directory missing, so created it
+            self.sftp.chdir(basename)
+            return True
             
     def connect(self, host, username, key):
         if key != 0:

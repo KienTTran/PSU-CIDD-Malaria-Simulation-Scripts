@@ -120,9 +120,7 @@ if __name__=="__main__":
     f = open(submit_job_template_file.replace('.template','.pbs'),'w')
     f.write(new_file_data)
     f.close()
-    
-    #Zip outputs
-        
+            
     #Zip output folders:
     file_count = len([name for name in os.listdir(config_folder) if os.path.isfile(os.path.join(config_folder, name))])
     if file_count == config_number:

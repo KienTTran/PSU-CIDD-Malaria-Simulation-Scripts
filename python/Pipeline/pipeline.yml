@@ -1,55 +1,58 @@
 ssh:
     address: submit.aci.ics.psu.edu
-    username: &username_anchor ktt5121
+    username: &username ktt5121
     key: 0 #provide key path to avoid entering password
 
+project:
+    folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
+    exe: build/bin/MaSim
+        
 build:
-    remote:
-        workplace_folder: Github
-        project_folder: PSU-CIDD-Malaria-Simulation-Test
+    local: build
     repo:
         url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
         branch: dev
-    script:
-        name: build.sh #This file name will be set to be output of generator as well
+    script: #The file name will be set to be output of generator as well. If not present, default name build.sh will be output from generator
+        name: build.sh
+        folder: Github2/PSU-CIDD-Malaria-Simulation-Test2 #folder on remote to run the script
         parameters:
     generator:
-        script: generate_build_scripts.py
+        name: #generate_build_scripts.py
         folder: build
         parameters:
-         - build.template
-         - *username_anchor
+        - build.template
+        - *username
              
 upload:
+    local: upload
     remote:
-        workplace_folder: work
-        project_folder: 
-            name: &project_name_anchor Pipeline_1
-            bin: bin
-            output: output
-            raw: raw
-    files:
-     - configs.csv
-     - job_template.pbs
-     - submit_all_jobs.pbs
-     - generated_configs.tar.gz
+        files:
+        - work/Pipeline_1/output
+        - work/Pipeline_1/bin:
+            - configs.csv
+            - generated_configs.tar.gz
+        - work/Pipeline_1/raw:
+            - job_template.pbs
+            - submit_all_jobs.pbs
     generator:
-        script: generate_upload_files.py
+        name: generate_upload_files.py
         folder: upload
         parameters:
-         - generated_configs
-         - parameters.yml #parameters to generate configs
-         - input.yml
-         - *username_anchor
-         - *project_name_anchor
-         - job_template.template
-         - submit_all_jobs.template
- 
- run:
-    remote:
-        build_folder: 
-        workplace_folder: work
-         
+        - generated_configs
+        - parameters.yml
+        - input.yml
+        - *username
+        - Pipeline_1
+        - job_template.template
+        - submit_all_jobs.template
+        
+schedule:
+    folder: work/Pipeline_1
+    bin: bin/MaSim
+    pbs: raw/submit_all_jobs.pbs
+        
+        
+        
+     
     
-    
-    
+                
