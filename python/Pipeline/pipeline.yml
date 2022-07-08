@@ -1,40 +1,55 @@
-cluster:
+ssh:
     address: submit.aci.ics.psu.edu
-    username: ktt5121
+    username: &username_anchor ktt5121
     key: 0 #provide key path to avoid entering password
 
 build:
-    local: 
-        folder: build
-        template: 
-            name: build.template #Must have .template extension
-            overwrite: True
     remote:
         workplace_folder: Github
         project_folder: PSU-CIDD-Malaria-Simulation-Test
     repo:
         url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
         branch: dev
-    
-run:
-    local:
-        folder: run
-        generate_config_files: 
-            script: generate_configs.py
-            config_folder: generated_inputs
-            parameters:
-             - parameters.yml #parameters to generate configs
-             - input.yml #Input template for exe file
-             - job_template.template #Must have .template after file name
-             - submit_all_jobs.template #Must have .template after file name
+    script:
+        name: build.sh #This file name will be set to be output of generator as well
+        parameters:
+    generator:
+        script: generate_build_scripts.py
+        folder: build
+        parameters:
+         - build.template
+         - *username_anchor
+             
+upload:
     remote:
-        workplace_folder: work #On cluster
-        project_folder:
-            name: Pipeline_1
+        workplace_folder: work
+        project_folder: 
+            name: &project_name_anchor Pipeline_1
             bin: bin
             output: output
             raw: raw
-        exe: MaSim
+    files:
+     - configs.csv
+     - job_template.pbs
+     - submit_all_jobs.pbs
+     - generated_configs.tar.gz
+    generator:
+        script: generate_upload_files.py
+        folder: upload
+        parameters:
+         - generated_configs
+         - parameters.yml #parameters to generate configs
+         - input.yml
+         - *username_anchor
+         - *project_name_anchor
+         - job_template.template
+         - submit_all_jobs.template
+ 
+ run:
+    remote:
+        build_folder: 
+        workplace_folder: work
+         
     
     
     

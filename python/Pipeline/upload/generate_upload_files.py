@@ -18,15 +18,16 @@ def read_parameters(parameter):
             params[item] = doc
     return params
         
-if __name__=="__main__":    
-    parameter_file = str(sys.argv[1])
-    config_file = str(sys.argv[2])
-    job_template_file = str(sys.argv[3])
-    submit_job_template_file = str(sys.argv[4])    
-    config_folder = str(sys.argv[5])
-    job_name = str(sys.argv[6])
-    job_exe = str(sys.argv[7])
-    username = str(sys.argv[8])
+if __name__=="__main__":
+    config_folder = str(sys.argv[1])
+    parameter_file = str(sys.argv[2])
+    config_file = str(sys.argv[3])
+    username = str(sys.argv[4])
+    job_name = str(sys.argv[5])
+    job_template_file = str(sys.argv[6])
+    submit_job_template_file = str(sys.argv[7])
+    job_exe = 'MaSim'
+    csv_file = 'configs.csv'
     
     file_path = str(Path.cwd())
     if "\\" in file_path:
@@ -80,7 +81,7 @@ if __name__=="__main__":
     config_df = pd.DataFrame(config)
     config_df.columns = ['beta','z','kappa']
     
-    config_df.to_csv("configs.csv",index=True,index_label="Index")
+    config_df.to_csv(csv_file,index=True,index_label="Index")
         
     df = config_df.reset_index()  # make sure indexes pair with number of rows
     try:
@@ -108,7 +109,7 @@ if __name__=="__main__":
     f = open(job_template_file.replace('.template','.pbs'),'w')
     f.write(new_file_data)
     f.close()            
-        
+    	
     #Change submit_all_jobs file
     f = open(submit_job_template_file,'r')
     template = f.read()
@@ -118,7 +119,21 @@ if __name__=="__main__":
     new_file_data = new_file_data.replace("#REPLICATES#",str(params['replicates'][0]) + "\n")
     f = open(submit_job_template_file.replace('.template','.pbs'),'w')
     f.write(new_file_data)
-    f.close()  
+    f.close()
+    
+    #Zip outputs
+        
+    #Zip output folders:
+    file_count = len([name for name in os.listdir(config_folder) if os.path.isfile(os.path.join(config_folder, name))])
+    if file_count == config_number:
+        print("Zipping genereted configs folder")
+        os.system('tar -cvf ' + config_folder + '.tar.gz' + ' ' + config_folder)
+    else:
+        print("Error in generating configs, not enough files, pelase check and rerun")
+        exit(0)
+    
+    
+    
             
         
     

@@ -6,34 +6,48 @@ Created on Wed Jul  6 11:15:57 2022
 """
 import paramiko
 import yaml
+import os
+from os.path import exists
 from getpass import getpass
-
-class SSHClient():
+        
+class PipelineClient():
     ssh = paramiko.SSHClient()
     sftp = 0
-    params = {} 
     
     def read_parameters(self, input_yaml):
         print("Reading " + input_yaml)
         with open(input_yaml,'r') as file:
-            documents = yaml.full_load(file)
-            for item, doc in documents.items():
-                self.params[item] = doc
-                
-        return self.params
+            return yaml.full_load(file)
     
     def disconnect(self):
         self.ssh.close()
         self.sftp.close()
+        
+    def run_cmd_locally(self,command):
+        print("[Local] >>> ", command)
+        try:
+            os.system(command)
+        except Exception as e:
+            print('Run cmd locally with error ' + str(e))
+            exit(0)
     
-    def run_cmd(self,command):
-        print(">>> ", command)
+    def run_cmd_remotely(self,command):
+        print("[Remote] >>> ", command)
         (stdin, stdout, stderr) = self.ssh.exec_command(command,get_pty=True)
         for line in stdout.readlines():
             print(line)
         err = stderr.read().decode()
         if err:
             print(err)
+            exit(0)
+            
+    def check_file_path_exists(self,file_path):
+        if exists(file_path):
+            print("Outputs are good, continue")
+        else:
+            print("Wrong outputs from script, please check and run again")
+            print("Expected output: " + file_path)
+            exit(0)
             
     def connect(self, host, username, key):
         if key != 0:
