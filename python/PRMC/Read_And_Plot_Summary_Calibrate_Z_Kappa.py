@@ -35,7 +35,7 @@ for index,config in config_df.iterrows():
         file_path = os.path.join(local_path_raw, filename)
         try:
             csv = pd.read_csv(file_path,sep='\t',header=None,index_col=None)
-            row = csv.iloc[0,[4,6] + [*range(13,73)]]            
+            row = csv.iloc[0,[4,6] + [*range(16,76)]]            
             r = row.to_list()
             r.append((float)(kappa))
             r.append((float)(z))
@@ -56,8 +56,9 @@ data_plot = pd.read_csv(local_path + "data_dev_exp_" + str(exp_number) + ".csv")
 import seaborn as sns
 from matplotlib import pyplot as plt
 import math
+import numpy
 
-kappas = [0.1,0.5,1.0,2,4]
+kappas = numpy.arange(0.1,8.01,0.5)
 data_plot_by_kappa = []
 
 for kappa in kappas:

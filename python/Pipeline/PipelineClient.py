@@ -9,7 +9,7 @@ import yaml
 import os
 from os.path import exists
 from getpass import getpass
-        
+
 class PipelineClient():
     ssh = paramiko.SSHClient()
     sftp = 0

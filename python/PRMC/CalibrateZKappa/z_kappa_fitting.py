@@ -51,7 +51,7 @@ def my_curve_fit(data):
     # popt,pcov = curve_fit(sigmoid, data.logEIR, data.age2to10, p0, maxfev=5000, method='trf')
 
     p0 = [1,1, data.age2to10.min()] # this is an mandatory initial guess
-    popt,pcov = curve_fit(curvefunc, data.logEIR, data.age2to10, p0, maxfev=5000)
+    popt,pcov = curve_fit(curvefunc, data.logEIR, data.age2to10, p0, maxfev=15000)
     
     return curvefunc,popt,pcov
 
