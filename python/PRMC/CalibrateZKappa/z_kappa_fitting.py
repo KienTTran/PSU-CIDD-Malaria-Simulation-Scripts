@@ -9,9 +9,9 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-exp_number = 15
+exp_number = 18
 
-local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
+local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
 local_path_bin = local_path + "\\bin"
 

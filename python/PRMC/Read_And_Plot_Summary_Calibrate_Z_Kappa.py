@@ -10,9 +10,9 @@ import pandas as pd
 import numpy as np
 import math
 
-exp_number = 15
+exp_number = 18
 
-local_path = "D:\\plot\\PRMC_2_Genotypes_Exp_" + str(exp_number) + "\\"
+local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
 local_path_bin = local_path + "\\bin"
 
@@ -26,7 +26,7 @@ data = []
 for index,config in config_df.iterrows(): 
     for run in range(n_run):
         # print(run)
-        filename = "summary_%d.txt"%(index*1000 + run)
+        filename = "validation_summary_%d.txt"%(index*1000 + run)
         # print(filename)        
         kappa = config.kappa
         z = config.z

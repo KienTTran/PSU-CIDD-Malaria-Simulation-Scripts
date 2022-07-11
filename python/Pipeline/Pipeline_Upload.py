@@ -19,6 +19,10 @@ def cmd_generate(working_path,generate_script,parameters):
     return  'cd ' + working_path + \
             '; python3 ' + generate_script + ' ' + parameters
             
+def cmd_unzip(working_path,zip_file):
+    return  'cd ' + working_path + \
+            '; tar -xvf ' + zip_file
+                        
 #Get Client
 client = PipelineClient()
 
@@ -45,49 +49,32 @@ print('Cluster project path: ' + cluster_project_path)
 print('Cluster target path: ' + cluster_target_path)
 
 #Generate config script
-generator_script_name = params['upload']['generator']['name']
-generator_script_dir = params['upload']['generator']['folder']
-generator_script_parameters = params['upload']['generator']['parameters']
-generator_script_parameter_str = ''
-if generator_script_parameters != None:
-    for parameter in generator_script_parameters:
-        generator_script_parameter_str += ' ' + str(parameter)
+upload_generator_script_name = params['upload']['generator']['name']
+upload_generator_script_dir = params['upload']['generator']['folder']
+upload_generator_script_parameters = params['upload']['generator']['parameters']
+upload_generator_script_parameter_str = ''
+if upload_generator_script_parameters != None:
+    for parameter in upload_generator_script_parameters:
+        upload_generator_script_parameter_str += ' ' + str(parameter)
 
 #Check using generated files or local files
-upload_using_generator = generator_script_name != None
+upload_using_generator = upload_generator_script_name != None
 upload_file_pairs = params['upload']['remote']['files']
-        
+upload_using_local = upload_file_pairs != None
+
 local_upload_file_path = []
 cluster_upload_file_path = []
-cluster_mkdir_path = []  
+cluster_upload_mkdir_path = []  
+cluster_upload_zip_path = []
 local_all_file_exists = True
-if upload_file_pairs == None:
-    print('No files to upload, please check ' + local_upload_path)
-    exit(0)
-else:    
-    for pair in upload_file_pairs:
-        if type(pair) == str:
-            cluster_mkdir_path.append(os.path.join(cluster_home_path,pair))
-        else:
-            for key in pair.keys():
-                upload_path = key
-                upload_files = pair[key]
-                cluster_mkdir_path.append(os.path.join(cluster_home_path,upload_path))
-                for upload_file in upload_files:
-                    local_file_path = os.path.join(local_upload_path,upload_file)
-                    cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
-                    local_upload_file_path.append(local_file_path)
-                    cluster_upload_file_path.append(cluster_file_path)
-                    local_all_file_exists = local_all_file_exists and os.path.exists(local_file_path)
-                    if not os.path.exists(local_file_path):
-                        print(upload_file + ' does not exist, will use generate files using generators')
-
-if local_all_file_exists:
-    for file_path in local_upload_file_path:
-        print('Local file path (exists):' + file_path)
-else:
-    print('Generating files using generator')
-    client.run_cmd_locally(cmd_generate(generator_script_dir,generator_script_name,generator_script_parameter_str))
+    
+if (upload_using_local and upload_using_generator) or (upload_using_generator and not upload_using_local):
+    if not upload_using_local:
+        print('Only generator script is in input, please specify upload files')
+        exit(0)
+    else:
+        print('Both local and generator scripts are in input, using generator to produce upload files')
+    client.run_cmd_locally(cmd_generate(upload_generator_script_dir,upload_generator_script_name,upload_generator_script_parameter_str))
     for pair in upload_file_pairs:
         if type(pair) != str:
             for key in pair.keys():
@@ -101,17 +88,46 @@ else:
                         print(upload_file + ' does not exist, please check generator outputs')
                     else:
                         print('Local file path (generated): ' + local_file_path)
+elif upload_using_local and not upload_using_generator:
+    print('Only local files are in input, upload using local files')
+    for pair in upload_file_pairs:
+        if type(pair) == str:
+            cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,pair))
+        else:
+            for key in pair.keys():
+                upload_path = key
+                upload_files = pair[key]
+                cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,upload_path))
+                for upload_file in upload_files:
+                    local_file_path = os.path.join(local_upload_path,upload_file)
+                    cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
+                    local_upload_file_path.append(local_file_path)
+                    cluster_upload_file_path.append(cluster_file_path)
+                    if '.tar.gz' in upload_file:
+                        cluster_upload_zip_path.append({os.path.join(cluster_home_path,upload_path) : upload_file})
+                    local_all_file_exists = local_all_file_exists and os.path.exists(local_file_path)
+                    if not os.path.exists(local_file_path):
+                        print(upload_file + ' does not exist')
+    if local_all_file_exists:
+        for file_path in local_upload_file_path:
+            print('Local file path (exists):' + file_path)
+    else:
+        print('Local files are in input, but does not exist, please check and run again')
+        exit(0)
+else:
+    print('Please supply generator script to produce files to upload')
+    exit(0)
 
 for file_path in cluster_upload_file_path:
-    print('Cluster file path (will upload): ' + file_path)
-for file_path in cluster_mkdir_path:
-    print('Cluster file path (will create): ' + file_path)
+    print('Cluster file path (upload): ' + file_path)
+for file_path in cluster_upload_mkdir_path:
+    print('Cluster file path (create): ' + file_path)
     
 #Connect via SSH
 ssh,sftp = client.connect(cluster_address, cluster_username, cluster_key)
 
 #Check cluster directories
-for file_path in cluster_mkdir_path:
+for file_path in cluster_upload_mkdir_path:
     client.mkdir_nested(file_path)
     print('Created cluster path: ' + file_path)
     
@@ -121,14 +137,21 @@ for local_file, cluster_file in zip(local_upload_file_path,cluster_upload_file_p
     sftp.put(local_file, cluster_file)
     print('Upload file: ' + file_path)
     cluster_all_file_exists = cluster_all_file_exists and client.print_dir_path_exist_remotely(file_path)
-
+    
 #Final check
 if cluster_all_file_exists:
     print('All files uploaded successully to cluster')
 else:
     print('Error when uploading files. Please check and try again')
-
-
+    
+#Unzip
+for pair in cluster_upload_zip_path:
+    for key in pair.keys():
+        print('Unziping file ' + key + '/' + pair[key])
+        client.run_cmd_remotely(cmd_unzip(key,pair[key]))
+ 
+print('Upload pipeline done')
+client.disconnect()
 
 
 
