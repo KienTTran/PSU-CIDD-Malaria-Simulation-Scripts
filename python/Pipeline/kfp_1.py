@@ -1,7 +1,18 @@
 from kfp import dsl, compiler
-import kfp.components
-            
-def build_op():
+import kfp.components as comp
+import kfp
+
+client = kfp.Client(host='http://172.28.86.153:31492/')
+print(client.list_experiments())
+
+web_downloader_op = kfp.components.load_component_from_url(
+    'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/contrib/web/Download/component.yaml')
+
+pipeline_config_url = 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/pipeline.yml'
+ssh_key_url = ''
+
+def build(pipeline_config: comp.InputArtifact(),
+          ssh_key: comp.InputArtifact()):
     import paramiko
     import yaml
     import os
@@ -104,20 +115,22 @@ def build_op():
             return self.ssh, self.sftp
         
     client = PipelineClient()
+    print(pipeline_config)
+    params = client.read_parameters(pipeline_config)
+    print(params)
+    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
+    client.run_cmd_remotely('ls -l')
 
-create_build = kfp.components.create_component_from_func(
-    func=build_op,
-    output_component_file='component.yaml', # This is optional. It saves the component spec for future use.
-    base_image='python:3.8',
-    packages_to_install=['paramiko','pyaml'])
-
-
-@dsl.pipeline(
-    name='Pipeline',
-    description='Pipeline'
-)
-def pipeline():
-    build_task = create_build()
-
-if __name__ == '__main__':
-    compiler.Compiler().compile(pipeline, __file__ + '.yaml')
+def build_pipeline():
+    build_op = comp.create_component_from_func(
+        func = build,
+        output_component_file='component.yaml', # This is optional. It saves the component spec for future use.
+        base_image='python:3.8',
+        packages_to_install=['paramiko','pyaml','urllib3'])    
+    pipeline_config_download_task = web_downloader_op(url = pipeline_config_url)
+    ssh_key_download_task = web_downloader_op(url = ssh_key_url)
+    build_op(pipeline_config = pipeline_config_download_task.outputs['data'], 
+             ssh_key = ssh_key_download_task.outputs['data'])
+    
+args = {'url' : pipeline_config_url}
+client.create_run_from_pipeline_func(build_pipeline, arguments={})
