@@ -10,7 +10,7 @@ download_op = kfp.components.load_component_from_url(
 'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/contrib/web/Download/component.yaml')
 
 pipeline_config_url = \
-''
+'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/pipeline.yml'
 
 ssh_key_url = \
 ''
@@ -136,7 +136,7 @@ def generate_build_script_func(pipeline_config: comp.InputArtifact(),
     #Script info
     generate_build_script(generate_template, params['ssh']['username'], generated_script_path)
 
-def upload_config_generator_func(pipeline_config: comp.InputArtifact()):
+def upload_generator_func(pipeline_config: comp.InputArtifact()):
     import yaml
     import os
     
@@ -145,15 +145,21 @@ def upload_config_generator_func(pipeline_config: comp.InputArtifact()):
     with open(pipeline_config,'r') as file:
         params =  yaml.full_load(file)
         
-    generator_parameters = params['upload']['generator']['parameters']
-    generator_parameter_str = ''
-    if generator_parameters != None:
-        for parameter in generator_parameters:
-            generator_parameter_str += ' ' + str(parameter)
+    generator_build_parameters = params['generator']['build']['parameters']
+    generator_build_parameter_str = ''
+    if generator_build_parameters != None:
+        for parameter in generator_build_parameters:
+            generator_build_parameter_str += ' ' + str(generator_build_parameters)
+                
+    generator_config_parameters = params['generator']['config']['parameters']
+    generator_config_parameter_str = ''
+    if generator_config_parameters != None:
+        for parameter in generator_config_parameters:
+            generator_config_parameter_str += ' ' + str(parameter)
     
     cluster_username = params['ssh']['username']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-    upload_file_pairs = params['upload']['remote']['files']
+    upload_file_pairs = params['upload']['files']
     cluster_upload_file_path = []
     cluster_upload_mkdir_path = []
     for pair in upload_file_pairs:
@@ -168,18 +174,25 @@ def upload_config_generator_func(pipeline_config: comp.InputArtifact()):
                     cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
                     cluster_upload_file_path.append(cluster_file_path)
                     print(upload_file + ' --> ' + cluster_file_path)
+                    
+    for file_path in cluster_upload_file_path:
+        print('Cluster file path (upload): ' + file_path)
+    for file_path in cluster_upload_mkdir_path:
+        print('Cluster file path (create): ' + file_path)
     
 def pipeline():        
     pipeline_config_download_task = download_op(url = pipeline_config_url)
+    pipeline_config_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
     ssh_key_download_task = download_op(url = ssh_key_url)
+    ssh_key_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
     
-    # upload_config_generator_op = comp.create_component_from_func(
-    #         func = upload_config_generator_func,
-    #         output_component_file='components/upload_config_generator_comp.yaml',
-    #         base_image='python:3.8',
-    #         packages_to_install=['pyaml'])
+    upload_generator_op = comp.create_component_from_func(
+            func = upload_generator_func,
+            output_component_file='components/upload_config_generator_comp.yaml',
+            base_image='python:3.8',
+            packages_to_install=['pyaml'])
     
-    # upload_config_generator_task = upload_config_generator_op(pipeline_config = pipeline_config_download_task.outputs['data'])
+    upload_generator_task = upload_generator_op(pipeline_config = pipeline_config_download_task.outputs['data'])
     
     # generate_build_script_op = comp.create_component_from_func(
     #         func = generate_build_script_func,
