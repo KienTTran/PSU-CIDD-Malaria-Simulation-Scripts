@@ -6,8 +6,13 @@ outputs:
 - {name: generated_script}
 implementation:
   container:
-    image: python:3.7
+    image: python:3.8
     command:
+    - sh
+    - -c
+    - (PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
+      'pyaml' || PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
+      'pyaml' --user) && "$0" "$@"
     - sh
     - -ec
     - |
@@ -16,22 +21,23 @@ implementation:
       python3 -u "$program_path" "$@"
     - "def _make_parent_dirs_and_return_path(file_path: str):\n    import os\n   \
       \ os.makedirs(os.path.dirname(file_path), exist_ok=True)\n    return file_path\n\
-      \ndef generate_build_script_func(pipeline_config,\n                      generate_template,\n\
-      \                      generated_script_path):    \n    import yaml\n\n    def\
-      \ generate_build_script(template_file, \n                              username,\
-      \ \n                              sh_script_path):       \n        f = open(template_file,'r')\n\
-      \        temp = f.read()\n        f.close()\n        build_sh_file_data = temp.replace(\"\
-      #username#\",username)\n        print('Writing build script username: ' + str(username))\n\
-      \        f = open(sh_script_path,'w')\n        f.write(build_sh_file_data)\n\
-      \        f.close()\n\n    params = 0\n    print(\"Reading \" + pipeline_config)\n\
-      \    with open(pipeline_config,'r') as file:\n        params =  yaml.full_load(file)\n\
-      \n    #Script info\n    generate_build_script(generate_template, params['ssh']['username'],\
-      \ generated_script_path)\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Generate\
-      \ build script func', description='')\n_parser.add_argument(\"--pipeline-config\"\
-      , dest=\"pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--generate-template\", dest=\"generate_template\", type=str,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--generated-script\"\
-      , dest=\"generated_script_path\", type=_make_parent_dirs_and_return_path, required=True,\
+      \ndef generate_build_script_func(pipeline_config,\n                        \
+      \      generate_template,\n                              generated_script_path):\
+      \    \n    import yaml\n\n    def generate_build_script(template_file, \n  \
+      \                            username, \n                              sh_script_path):\
+      \       \n        f = open(template_file,'r')\n        temp = f.read()\n   \
+      \     f.close()\n        build_sh_file_data = temp.replace(\"#username#\",username)\n\
+      \        print('Writing build script username: ' + str(username))\n        f\
+      \ = open(sh_script_path,'w')\n        f.write(build_sh_file_data)\n        f.close()\n\
+      \n    params = 0\n    print(\"Reading \" + pipeline_config)\n    with open(pipeline_config,'r')\
+      \ as file:\n        params =  yaml.full_load(file)\n\n    #Script info\n   \
+      \ generate_build_script(generate_template, params['ssh']['username'], generated_script_path)\n\
+      \nimport argparse\n_parser = argparse.ArgumentParser(prog='Generate build script\
+      \ func', description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"\
+      pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      --generate-template\", dest=\"generate_template\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--generated-script\", dest=\"\
+      generated_script_path\", type=_make_parent_dirs_and_return_path, required=True,\
       \ default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\n\
       _outputs = generate_build_script_func(**_parsed_args)\n"
     args:

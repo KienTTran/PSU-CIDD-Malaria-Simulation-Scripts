@@ -15,9 +15,6 @@ pipeline_config_url = \
 ssh_key_url = \
 ''
 
-build_generate_template_url = \
-''
-
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                         ssh_key: comp.InputArtifact()):
     import paramiko
@@ -139,9 +136,7 @@ def generate_build_script_func(pipeline_config: comp.InputArtifact(),
     #Script info
     generate_build_script(generate_template, params['ssh']['username'], generated_script_path)
 
-def generate_configs_func(pipeline_config: comp.InputArtifact(),
-                          generator_script: comp.InputArtifact(),
-                          generated_configs_path: comp.OutputPath()):
+def upload_config_generator_func(pipeline_config: comp.InputArtifact()):
     import yaml
     import os
     
@@ -172,30 +167,37 @@ def generate_configs_func(pipeline_config: comp.InputArtifact(),
                 for upload_file in upload_files:
                     cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
                     cluster_upload_file_path.append(cluster_file_path)
-                    print(upload_file + ' --> ' + cluster_upload_file_path)
+                    print(upload_file + ' --> ' + cluster_file_path)
     
 def pipeline():        
     pipeline_config_download_task = download_op(url = pipeline_config_url)
     ssh_key_download_task = download_op(url = ssh_key_url)
-    build_generate_template_download_task = download_op(url = build_generate_template_url)
     
-    generate_build_script_op = comp.create_component_from_func(
-            func = generate_build_script_func,
-            output_component_file='components/generate_script_comp.yaml',
-            base_image='python:3.8',
-            packages_to_install=['paramiko','pyaml'])
+    # upload_config_generator_op = comp.create_component_from_func(
+    #         func = upload_config_generator_func,
+    #         output_component_file='components/upload_config_generator_comp.yaml',
+    #         base_image='python:3.8',
+    #         packages_to_install=['pyaml'])
     
-    generate_build_script_task = generate_build_script_op(pipeline_config = pipeline_config_download_task.outputs['data'],
-                                                          generate_template = build_generate_template_download_task.outputs['data'])
+    # upload_config_generator_task = upload_config_generator_op(pipeline_config = pipeline_config_download_task.outputs['data'])
     
-    run_on_cluster_op = comp.create_component_from_func(
-            func = run_on_cluster_func,
-            output_component_file='components/run_on_cluster_comp.yaml', # This is optional. It saves the component spec for future use.
-            base_image='python:3.8',
-            packages_to_install=['paramiko','pyaml'])
+    # generate_build_script_op = comp.create_component_from_func(
+    #         func = generate_build_script_func,
+    #         output_component_file='components/generate_script_comp.yaml',
+    #         base_image='python:3.8',
+    #         packages_to_install=['pyaml'])
     
-    run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
-                                            ssh_key = ssh_key_download_task.outputs['data'])
+    # generate_build_script_task = generate_build_script_op(pipeline_config = pipeline_config_download_task.outputs['data'],
+    #                                                       generate_template = build_generate_template_download_task.outputs['data'])
+    
+    # run_on_cluster_op = comp.create_component_from_func(
+    #         func = run_on_cluster_func,
+    #         output_component_file='components/run_on_cluster_comp.yaml', # This is optional. It saves the component spec for future use.
+    #         base_image='python:3.8',
+    #         packages_to_install=['paramiko','pyaml'])
+    
+    # run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
+    #                                         ssh_key = ssh_key_download_task.outputs['data'])
     
 
 #%%

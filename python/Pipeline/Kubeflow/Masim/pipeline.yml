@@ -5,8 +5,6 @@ ssh:
 project:
     folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
     exe: build/bin/MaSim
-        
-build:
     repo:
         url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
         branch: dev
@@ -16,12 +14,23 @@ upload:
     - work/Pipeline_1/output
     - work/Pipeline_1/raw
     - work/Pipeline_1/bin:
-        - generate_configs.py
-        - parameters.yml
-        - input.yml
-        - job_template.template
-        - submit_all_jobs.template
-    generator:
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/generate_configs.py
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/parameters.yml
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/input.yml
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/job_template.template
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/submit_all_jobs.template
+    - work/Pipeline_1/build:
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/build.template
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/generate_build_script.py
+        
+generator:
+    build:
+        script: generate_build_script.py
+        parameters:
+        - build.template
+        - *username
+        - build.sh
+    config:
         script: generate_configs.py
         parameters:
         - generated_configs
@@ -31,11 +40,7 @@ upload:
         - Pipeline_1
         - job_template.template
         - submit_all_jobs.template
-        
-schedule:
-    folder: work/Pipeline_1
-    bin: bin/MaSim
-    pbs: raw/submit_all_jobs.pbs
+    
         
         
         
