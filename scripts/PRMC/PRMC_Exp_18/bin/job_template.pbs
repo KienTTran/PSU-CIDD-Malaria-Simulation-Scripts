@@ -2,7 +2,7 @@
 ###### account to identify cluster
 #PBS -A mfb9_b_g_sc_default
 ###### job name
-#PBS -N Exp_18
+#PBS -N Exp_18_3
 #
 ###### number of nodes, processors per node
 #PBS -l nodes=1:ppn=1

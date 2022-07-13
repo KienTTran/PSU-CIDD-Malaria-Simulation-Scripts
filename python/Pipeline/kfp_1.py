@@ -1,6 +1,7 @@
 from kfp import dsl, compiler
 import kfp.components as comp
 import kfp
+from typing import NamedTuple
 
 client = kfp.Client(host='http://172.28.86.153:31492/')
 print(client.list_experiments())
@@ -14,60 +15,55 @@ pipeline_config_url = \
 ssh_key_url = \
 ''
 
-script_url = \
+build_script_url = \
 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/build/generate_build_scripts.py'
 
-template_url = \
+build_template_url = \
 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/build/build.template'
-
-                    
-def cmd_generate(working_path,script_name,parameters):
-    return  'cd ' + working_path + \
-            '; python3 ' + script_name + ' ' + parameters
-            
-def cmd_git_pull(project_path, build_repo_url, build_repo_branch):
-    project_name = project_path.split('/')[-1]
-    project_parent_path = project_path.replace(project_name,'')
-    return  'cd ' + project_parent_path + \
-            '; git clone ' + build_repo_url + " " + project_name + " -b " + build_repo_branch + \
-            '; ls -l ' + project_name + \
-            '; cd ' + project_name + \
-            '; git checkout ' + build_repo_branch
-            
-def cmd_git_checkout(project_path, build_repo_branch):
-    return  'cd ' + project_path + \
-            '; git checkout ' + build_repo_branch
-                
-def cmd_build(project_path, build_script_name, parameters):
-    return  'cd ' + project_path + \
-            '; pwd' + \
-            '; chmod +x ' + build_script_name + \
-            '; sh ' + build_script_name + ' ' + parameters
-            
-def generate_build_script(template_file, 
-                          username, 
-                          sh_file = 'build.sh'):
-    
-    f = open(template_file,'r')
-    template = f.read()
-    f.close()
-    build_sh_file_data = template.replace("#username#",username)
-    print('Writing build script')
-    f = open(sh_file,'w')
-    f.write(build_sh_file_data)
-    f.close()
-    
+      
 def build_func(pipeline_config: comp.InputArtifact(),
           ssh_key: comp.InputArtifact(),
           script: comp.InputArtifact(),
-          template: comp.InputArtifact(),
-          params: comp.OutputArtifact()):
+          template: comp.InputArtifact()) ->  NamedTuple('outputs', [
+                                                        ('exe_path', str)
+                                                        ]):
     
     import paramiko
     import yaml
     import os
     from os.path import exists
-    from getpass import getpass
+    from collections import namedtuple
+                
+    def cmd_git_pull(project_path, build_repo_url, build_repo_branch):
+        project_name = project_path.split('/')[-1]
+        project_parent_path = project_path.replace(project_name,'')
+        return  'cd ' + project_parent_path + \
+                '; git clone ' + build_repo_url + " " + project_name + " -b " + build_repo_branch + \
+                '; ls -l ' + project_name + \
+                '; cd ' + project_name + \
+                '; git checkout ' + build_repo_branch
+                
+    def cmd_git_checkout(project_path, build_repo_branch):
+        return  'cd ' + project_path + \
+                '; git checkout ' + build_repo_branch
+                    
+    def cmd_build(project_path, build_script_name, parameters):
+        return  'cd ' + project_path + \
+                '; pwd' + \
+                '; chmod +x ' + build_script_name + \
+                '; sh ' + build_script_name + ' ' + parameters
+
+    def generate_build_script(template_file, 
+                              username, 
+                              sh_script_path):       
+        f = open(template_file,'r')
+        temp = f.read()
+        f.close()
+        build_sh_file_data = temp.replace("#username#",username)
+        print('Writing build script username: ' + str(username))
+        f = open(sh_script_path,'w')
+        f.write(build_sh_file_data)
+        f.close()
 
     class PipelineClient():
         ssh = paramiko.SSHClient()
@@ -143,40 +139,89 @@ def build_func(pipeline_config: comp.InputArtifact(),
                 return True
                 
         def connect(self, host, username, key):
-            if key != 0:
-                self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                key = paramiko.Ed25519Key.from_private_key_file(key)
-                self.ssh.connect(hostname=host, username=username, pkey=key)
-                print('Logged in to server')
-            else:
-                self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                input_pass = getpass('\nEnter password to login to server: ')
+            if key != '':
                 try:
-                    self.ssh.connect(host, 22, username, input_pass, allow_agent=False, look_for_keys=False)
-                    key_auth = str(self.ssh.get_transport())
-                    if 'awaiting auth' in key_auth:
-                        self.ssh.get_transport().auth_interactive_dumb(username, handler=None, submethods='')
+                    self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                    key = paramiko.Ed25519Key.from_private_key_file(key)
+                    self.ssh.connect(hostname=host, username=username, pkey=key)
+                    print('Logged in to server')
                 except (paramiko.SSHException) as e:
                     print('Cannot login with error ' + str(e))  
-                    print('Please check password or OTP on mobile')
-                    exit(0)
-                    
+                    print('Please check key or OTP on mobile')
+                    exit(0)     
+            else:
+                print('Please provide SSH key path')
+                exit(0)
+                
             self.sftp = self.ssh.open_sftp()
             return self.ssh, self.sftp
         
+    '''Pipeline start'''
     client = PipelineClient()
-    print(pipeline_config)
     params = client.read_parameters(pipeline_config)
     print(params)
-    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
-    client.run_cmd_remotely('ls -l')
-    
-    print(script)
-    print(template)
-    
-    generate_build_script(template, params['ssh']['username'])
+        
+    #ssh info
+    cluster_address = params['ssh']['address']
+    cluster_username = params['ssh']['username']
+    cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+    print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
 
-def build_pipeline():
+    #Script info
+    script_name = params['build']['script']['name']
+    if script_name == None:
+        script_name = 'build.sh'
+    script_working_dir = params['build']['script']['folder']
+    script_working_path = os.path.join(cluster_home_path,script_working_dir)
+    script_parameters = params['build']['script']['parameters']
+    script_parameter_str = ''
+    if script_parameters != None:
+        for parameter in script_parameters:
+            script_parameter_str += ' ' + str(parameter)
+
+    #Cluster info
+    cluster_project_dir = params['project']['folder']
+    cluster_project_path = os.path.join(cluster_home_path,cluster_project_dir)
+    cluster_script_path = script_working_path + "/" + script_name
+    cluster_target = params['project']['exe']
+    cluster_target_path = os.path.join(cluster_project_path,cluster_target)
+    print('Cluster project path: ' + cluster_project_path)
+    print('Cluster target path: ' + cluster_target_path)
+
+    #Repo info            
+    build_repo_url = params['build']['repo']['url']
+    build_repo_branch = params['build']['repo']['branch']
+    print('Repo path: ' + build_repo_url + ' branch: ' + build_repo_branch)
+
+    generate_build_script(template, params['ssh']['username'], script_name)
+
+    print('Local build script path: ' + script_name)
+    print('Cluster build script path: ' + cluster_script_path) 
+    
+    '''Connect to server '''
+    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
+    client.run_cmd_remotely('ls -l')   
+    try:
+        sftp.chdir(cluster_project_path)  # Test if cluster_path exists
+        print('Working source path exists, checking branch')
+        client.run_cmd_remotely(cmd_git_checkout(cluster_project_path, build_repo_branch))
+    except IOError:
+        print('Working source path does not exist, pull from Github')
+        client.mkdir_nested(cluster_project_path)
+        client.run_cmd_remotely(cmd_git_pull(cluster_project_path, build_repo_url, build_repo_branch))
+        
+    #Upload sh script
+    sftp.chdir(script_working_path)
+    print('Writing build script on server')
+    sftp.put(script_name, cluster_script_path)    
+    client.run_cmd_remotely(cmd_build(cluster_project_path,script_name,script_parameter_str))
+        
+    pipeline_output = namedtuple('outputs', ['exe_path'])
+    if client.print_file_path_exist_remotely(cluster_target_path):
+        return pipeline_output(cluster_target_path)    
+
+  
+def pipeline():
     build_op = comp.create_component_from_func(
         func = build_func,
         output_component_file='component.yaml', # This is optional. It saves the component spec for future use.
@@ -185,18 +230,19 @@ def build_pipeline():
         
     pipeline_config_download_task = download_op(url = pipeline_config_url)
     ssh_key_download_task = download_op(url = ssh_key_url)    
-    script_download_task = download_op(url = script_url)
-    template_download_task = download_op(url = template_url)
+    build_script_download_task = download_op(url = build_script_url)
+    build_template_download_task = download_op(url = build_template_url)
     
-    build_op(pipeline_config = pipeline_config_download_task.outputs['data'], 
+    build_task = build_op(pipeline_config = pipeline_config_download_task.outputs['data'], 
              ssh_key = ssh_key_download_task.outputs['data'],
-             script = script_download_task.outputs['data'],
-             template = template_download_task.outputs['data'])
+             script = build_script_download_task.outputs['data'],
+             template = build_template_download_task.outputs['data'])
+    
 
 #%%
-client.create_run_from_pipeline_func(build_pipeline, arguments={})
+client.create_run_from_pipeline_func(pipeline, arguments={})
 
     #%%
 if __name__ == '__main__':
     # Compiling the pipeline
-    kfp.compiler.Compiler().compile(build_pipeline, __file__ + '.yaml')
+    kfp.compiler.Compiler().compile(pipeline, __file__ + '.yaml')

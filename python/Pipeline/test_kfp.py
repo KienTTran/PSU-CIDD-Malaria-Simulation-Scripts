@@ -245,10 +245,9 @@ product_op = comp.create_component_from_func(
 @dsl.pipeline(
     name='Addition-pipeline',
     description='An example pipeline that performs addition calculations.')
-def my_pipeline(a, b='7', c='4', d='1'):
+def my_pipeline(a='8', b='7', c='4', d='1'):
     first_add_task = add_op(a, b)
     second_add_task = product_op(c, d, first_add_task.output)
     
 # Running the pipeline
-args = {a: 10, b: 20, c : 30, d: 40}
-client.create_run_from_pipeline_func(sum_pipeline, arguments=args)
+client.create_run_from_pipeline_func(my_pipeline, arguments={})
