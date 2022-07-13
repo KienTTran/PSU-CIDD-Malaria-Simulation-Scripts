@@ -1,7 +1,11 @@
-name: Build
+name: Build func
 inputs:
 - {name: pipeline_config}
 - {name: ssh_key}
+- {name: script}
+- {name: template}
+outputs:
+- {name: params}
 implementation:
   container:
     image: python:3.8
@@ -9,21 +13,21 @@ implementation:
     - sh
     - -c
     - (PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
-      'paramiko' 'pyaml' 'urllib3' || PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip
-      install --quiet --no-warn-script-location 'paramiko' 'pyaml' 'urllib3' --user)
-      && "$0" "$@"
+      'paramiko' 'pyaml' || PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install
+      --quiet --no-warn-script-location 'paramiko' 'pyaml' --user) && "$0" "$@"
     - sh
     - -ec
     - |
       program_path=$(mktemp)
       printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
-    - "def build(pipeline_config,\n          ssh_key):\n    import paramiko\n    import\
-      \ yaml\n    import os\n    from os.path import exists\n    from getpass import\
-      \ getpass\n\n    class PipelineClient():\n        ssh = paramiko.SSHClient()\n\
-      \        sftp = 0\n\n        def read_parameters(self, input_yaml):\n      \
-      \      print(\"Reading \" + input_yaml)\n            with open(input_yaml,'r')\
-      \ as file:\n                return yaml.full_load(file)\n\n        def disconnect(self):\n\
+    - "def build_func(pipeline_config,\n          ssh_key,\n          script,\n  \
+      \        template,\n          params):\n\n    import paramiko\n    import yaml\n\
+      \    import os\n    from os.path import exists\n    from getpass import getpass\n\
+      \n    class PipelineClient():\n        ssh = paramiko.SSHClient()\n        sftp\
+      \ = 0\n\n        def read_parameters(self, input_yaml):\n            print(\"\
+      Reading \" + input_yaml)\n            with open(input_yaml,'r') as file:\n \
+      \               return yaml.full_load(file)\n\n        def disconnect(self):\n\
       \            self.ssh.close()\n            self.sftp.close()\n\n        def\
       \ run_cmd_locally(self,command):\n            print(\"[Local] >>> \", command)\n\
       \            try:\n                os.system(command)\n            except Exception\
@@ -74,13 +78,24 @@ implementation:
       \ print(pipeline_config)\n    params = client.read_parameters(pipeline_config)\n\
       \    print(params)\n    ssh, sftp = client.connect(params['ssh']['address'],\
       \ params['ssh']['username'],ssh_key)\n    client.run_cmd_remotely('ls -l')\n\
-      \nimport argparse\n_parser = argparse.ArgumentParser(prog='Build', description='')\n\
-      _parser.add_argument(\"--pipeline-config\", dest=\"pipeline_config\", type=str,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--ssh-key\"\
-      , dest=\"ssh_key\", type=str, required=True, default=argparse.SUPPRESS)\n_parsed_args\
-      \ = vars(_parser.parse_args())\n\n_outputs = build(**_parsed_args)\n"
+      \n    print(script)\n    print(template)\n\n    generate_build_script(template,\
+      \ params['ssh']['username'])\n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Build\
+      \ func', description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"\
+      pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      --ssh-key\", dest=\"ssh_key\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--script\", dest=\"script\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--template\", dest=\"template\"\
+      , type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      --params\", dest=\"params\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parsed_args = vars(_parser.parse_args())\n\n_outputs = build_func(**_parsed_args)\n"
     args:
     - --pipeline-config
     - {inputPath: pipeline_config}
     - --ssh-key
     - {inputPath: ssh_key}
+    - --script
+    - {inputPath: script}
+    - --template
+    - {inputPath: template}
+    - --params
+    - {outputPath: params}

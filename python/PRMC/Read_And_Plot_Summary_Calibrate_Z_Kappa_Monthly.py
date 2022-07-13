@@ -24,6 +24,7 @@ n_run = 1
 #%%
 data = []
 for index,config in config_df.iterrows():
+    if index == 0:
         for run in range(n_run):
             # print(run)
             filename_summary = "validation_summary_%d.txt"%(index*1000 + run)
@@ -53,8 +54,8 @@ for index,config in config_df.iterrows():
             
             data.append(r_summary + r_monthly) 
             
-data_plot = pd.DataFrame(data)
-data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]
+# data_plot = pd.DataFrame(data)
+# data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]
 
 #data_plot["eir_log10"] = math.log10(data_plot.eir)
 #%%

@@ -5,14 +5,64 @@ import kfp
 client = kfp.Client(host='http://172.28.86.153:31492/')
 print(client.list_experiments())
 
-web_downloader_op = kfp.components.load_component_from_url(
-    'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/contrib/web/Download/component.yaml')
+download_op = kfp.components.load_component_from_url(
+'https://raw.githubusercontent.com/kubeflow/pipelines/master/components/contrib/web/Download/component.yaml')
 
-pipeline_config_url = 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/pipeline.yml'
-ssh_key_url = ''
+pipeline_config_url = \
+'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/pipeline.yml'
 
-def build(pipeline_config: comp.InputArtifact(),
-          ssh_key: comp.InputArtifact()):
+ssh_key_url = \
+''
+
+script_url = \
+'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/build/generate_build_scripts.py'
+
+template_url = \
+'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/build/build.template'
+
+                    
+def cmd_generate(working_path,script_name,parameters):
+    return  'cd ' + working_path + \
+            '; python3 ' + script_name + ' ' + parameters
+            
+def cmd_git_pull(project_path, build_repo_url, build_repo_branch):
+    project_name = project_path.split('/')[-1]
+    project_parent_path = project_path.replace(project_name,'')
+    return  'cd ' + project_parent_path + \
+            '; git clone ' + build_repo_url + " " + project_name + " -b " + build_repo_branch + \
+            '; ls -l ' + project_name + \
+            '; cd ' + project_name + \
+            '; git checkout ' + build_repo_branch
+            
+def cmd_git_checkout(project_path, build_repo_branch):
+    return  'cd ' + project_path + \
+            '; git checkout ' + build_repo_branch
+                
+def cmd_build(project_path, build_script_name, parameters):
+    return  'cd ' + project_path + \
+            '; pwd' + \
+            '; chmod +x ' + build_script_name + \
+            '; sh ' + build_script_name + ' ' + parameters
+            
+def generate_build_script(template_file, 
+                          username, 
+                          sh_file = 'build.sh'):
+    
+    f = open(template_file,'r')
+    template = f.read()
+    f.close()
+    build_sh_file_data = template.replace("#username#",username)
+    print('Writing build script')
+    f = open(sh_file,'w')
+    f.write(build_sh_file_data)
+    f.close()
+    
+def build_func(pipeline_config: comp.InputArtifact(),
+          ssh_key: comp.InputArtifact(),
+          script: comp.InputArtifact(),
+          template: comp.InputArtifact(),
+          params: comp.OutputArtifact()):
+    
     import paramiko
     import yaml
     import os
@@ -120,17 +170,33 @@ def build(pipeline_config: comp.InputArtifact(),
     print(params)
     ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
     client.run_cmd_remotely('ls -l')
+    
+    print(script)
+    print(template)
+    
+    generate_build_script(template, params['ssh']['username'])
 
 def build_pipeline():
     build_op = comp.create_component_from_func(
-        func = build,
+        func = build_func,
         output_component_file='component.yaml', # This is optional. It saves the component spec for future use.
         base_image='python:3.8',
-        packages_to_install=['paramiko','pyaml','urllib3'])    
-    pipeline_config_download_task = web_downloader_op(url = pipeline_config_url)
-    ssh_key_download_task = web_downloader_op(url = ssh_key_url)
-    build_op(pipeline_config = pipeline_config_download_task.outputs['data'], 
-             ssh_key = ssh_key_download_task.outputs['data'])
+        packages_to_install=['paramiko','pyaml'])
+        
+    pipeline_config_download_task = download_op(url = pipeline_config_url)
+    ssh_key_download_task = download_op(url = ssh_key_url)    
+    script_download_task = download_op(url = script_url)
+    template_download_task = download_op(url = template_url)
     
-args = {'url' : pipeline_config_url}
+    build_op(pipeline_config = pipeline_config_download_task.outputs['data'], 
+             ssh_key = ssh_key_download_task.outputs['data'],
+             script = script_download_task.outputs['data'],
+             template = template_download_task.outputs['data'])
+
+#%%
 client.create_run_from_pipeline_func(build_pipeline, arguments={})
+
+    #%%
+if __name__ == '__main__':
+    # Compiling the pipeline
+    kfp.compiler.Compiler().compile(build_pipeline, __file__ + '.yaml')
