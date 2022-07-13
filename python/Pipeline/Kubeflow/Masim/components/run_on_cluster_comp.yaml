@@ -1,0 +1,75 @@
+name: Run on cluster func
+inputs:
+- {name: pipeline_config}
+- {name: ssh_key}
+implementation:
+  container:
+    image: python:3.8
+    command:
+    - sh
+    - -c
+    - (PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
+      'paramiko' 'pyaml' || PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install
+      --quiet --no-warn-script-location 'paramiko' 'pyaml' --user) && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      printf "%s" "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - "def run_on_cluster_func(pipeline_config,\n                        ssh_key):\n\
+      \    import paramiko\n    import yaml\n    import os\n\n    class PipelineClient():\n\
+      \        ssh = paramiko.SSHClient()\n        sftp = 0\n\n        def disconnect(self):\n\
+      \            self.ssh.close()\n            self.sftp.close()\n\n        def\
+      \ run_cmd_remotely(self,command):\n            print(\"[Remote] >>> \", command)\n\
+      \            (stdin, stdout, stderr) = self.ssh.exec_command(command,get_pty=True)\n\
+      \            for line in stdout.readlines():\n                print(line)\n\
+      \            err = stderr.read().decode()\n            if err:\n           \
+      \     print(err)\n\n        def is_dir_path_existed_remotely(self,file_path):\n\
+      \            try:\n                self.sftp.chdir(file_path) # sub-directory\
+      \ exists\n                print(file_path + ' exists')\n                return\
+      \ True\n            except IOError:\n                print(file_path + ' does\
+      \ not exist')\n                return False\n\n        def is_file_path_existed_remotely(self,file_path):\n\
+      \            try:\n                self.sftp.stat(file_path) # sub-directory\
+      \ exists\n                print(file_path + ' exists')\n                return\
+      \ True\n            except IOError:\n                print(file_path + ' does\
+      \ not exist')\n                return False\n\n        def mkdir_nested_remotely(self,\
+      \ remote_directory):\n            \"\"\"Change to this directory, recursively\
+      \ making new folders if needed.\n            Returns True if any folders were\
+      \ created.\"\"\"\n            if remote_directory == '/':\n                #\
+      \ absolute path so change directory to root\n                self.sftp.chdir('/')\n\
+      \                return\n            if remote_directory == '':\n          \
+      \      # top-level relative directory must exist\n                return\n \
+      \           try:\n                self.sftp.chdir(remote_directory) # sub-directory\
+      \ exists\n            except IOError:\n                dirname, basename = os.path.split(remote_directory.rstrip('/'))\n\
+      \                self.mkdir_nested(dirname) # make parent directories\n    \
+      \            self.sftp.mkdir(basename) # sub-directory missing, so created it\n\
+      \                self.sftp.chdir(basename)\n                return True\n\n\
+      \        def connect(self, host, username, key):\n            if key != '':\n\
+      \                try:\n                    self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())\n\
+      \                    key = paramiko.Ed25519Key.from_private_key_file(key)\n\
+      \                    self.ssh.connect(hostname=host, username=username, pkey=key)\n\
+      \                    print('Logged in to server')\n                except (paramiko.SSHException)\
+      \ as e:\n                    print('Cannot login with error ' + str(e))  \n\
+      \                    print('Please check key or OTP on mobile')\n          \
+      \          exit(0)     \n            else:\n                print('Please provide\
+      \ SSH key path')\n                exit(0)\n\n            self.sftp = self.ssh.open_sftp()\n\
+      \            return self.ssh, self.sftp\n\n    params = 0    \n    print(\"\
+      Reading \" + pipeline_config)\n    with open(pipeline_config,'r') as file:\n\
+      \        params =  yaml.full_load(file)\n\n    client = PipelineClient()\n\n\
+      \    #ssh info\n    cluster_address = params['ssh']['address']\n    cluster_username\
+      \ = params['ssh']['username']\n    cluster_home_path = \"/storage/home/\" +\
+      \ cluster_username[0] + \"/\" + cluster_username\n    print('Cluster SSH info:\
+      \ ' + cluster_username + '@' + cluster_address)\n\n    '''Connect to server\
+      \ '''\n    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)\n\
+      \    client.run_cmd_remotely('ls -l')  \n\nimport argparse\n_parser = argparse.ArgumentParser(prog='Run\
+      \ on cluster func', description='')\n_parser.add_argument(\"--pipeline-config\"\
+      , dest=\"pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--ssh-key\", dest=\"ssh_key\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\n\
+      _outputs = run_on_cluster_func(**_parsed_args)\n"
+    args:
+    - --pipeline-config
+    - {inputPath: pipeline_config}
+    - --ssh-key
+    - {inputPath: ssh_key}

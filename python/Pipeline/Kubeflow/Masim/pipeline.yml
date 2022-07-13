@@ -1,7 +1,6 @@
 ssh:
     address: submit.aci.ics.psu.edu
     username: &username ktt5121
-    key: 0 #provide key path to avoid entering password
 
 project:
     folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
@@ -11,21 +10,19 @@ build:
     repo:
         url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
         branch: dev
-             
+         
 upload:
-    local: upload
-    remote:
-        files:
-        - work/Pipeline_1/output
-        - work/Pipeline_1/bin:
-            - configs.csv
-            - generated_configs.tar.gz
-        - work/Pipeline_1/raw:
-            - job_template.pbs
-            - submit_all_jobs.pbs
+    files:
+    - work/Pipeline_1/output
+    - work/Pipeline_1/raw
+    - work/Pipeline_1/bin:
+        - generate_configs.py
+        - parameters.yml
+        - input.yml
+        - job_template.template
+        - submit_all_jobs.template
     generator:
-        name: generate_upload_files.py
-        folder: upload
+        script: generate_configs.py
         parameters:
         - generated_configs
         - parameters.yml
