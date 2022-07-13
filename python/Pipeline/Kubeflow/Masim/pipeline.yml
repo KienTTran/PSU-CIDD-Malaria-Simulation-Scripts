@@ -1,6 +1,7 @@
 ssh:
     address: submit.aci.ics.psu.edu
     username: &username ktt5121
+    key: 0
 
 project:
     folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
@@ -9,7 +10,7 @@ project:
         url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
         branch: dev
          
-upload:
+remote:
     files:
     - work/Pipeline_1/output
     - work/Pipeline_1/raw

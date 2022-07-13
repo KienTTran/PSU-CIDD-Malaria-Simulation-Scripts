@@ -12,9 +12,6 @@ download_op = kfp.components.load_component_from_url(
 pipeline_config_url = \
 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/pipeline.yml'
 
-ssh_key_url = \
-''
-
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                         ssh_key: comp.InputArtifact()):
     import paramiko
@@ -103,11 +100,12 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     #ssh info
     cluster_address = params['ssh']['address']
     cluster_username = params['ssh']['username']
+    cluster_key = params['ssh']['key']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
     
     '''Connect to server '''
-    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
+    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'], cluster_key)
     client.run_cmd_remotely('ls -l')  
     
     
@@ -159,32 +157,35 @@ def upload_generator_func(pipeline_config: comp.InputArtifact()):
     
     cluster_username = params['ssh']['username']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-    upload_file_pairs = params['upload']['files']
-    cluster_upload_file_path = []
-    cluster_upload_mkdir_path = []
+    upload_file_pairs = params['remote']['files']
+    
+    cluster_path_src = []
+    cluster_path_dst = []
+    cluster_mkdir_path = []
     for pair in upload_file_pairs:
         if type(pair) == str:
-            cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,pair))
+            cluster_mkdir_path.append(os.path.join(cluster_home_path,pair))
         else:
             for key in pair.keys():
-                upload_path = key
-                upload_files = pair[key]
-                cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,upload_path))
-                for upload_file in upload_files:
-                    cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
-                    cluster_upload_file_path.append(cluster_file_path)
-                    print(upload_file + ' --> ' + cluster_file_path)
+                path = key
+                src_files = pair[key]
+                cluster_mkdir_path.append(os.path.join(cluster_home_path,path))
+                for src_file in src_files:
+                    cluster_file_dst_path = os.path.join(cluster_home_path,path)
+                    cluster_path_dst.append(cluster_file_dst_path)
+                    cluster_path_src.append(src_file)
+                    print(src_file + ' --> ' + cluster_file_dst_path)
                     
-    for file_path in cluster_upload_file_path:
-        print('Cluster file path (upload): ' + file_path)
-    for file_path in cluster_upload_mkdir_path:
+    for file_path in cluster_path_src:
+        print('Cluster file path (transfer from): ' + file_path)                    
+    for file_path in cluster_path_dst:
+        print('Cluster file path (transfer to): ' + file_path)
+    for file_path in cluster_mkdir_path:
         print('Cluster file path (create): ' + file_path)
     
 def pipeline():        
     pipeline_config_download_task = download_op(url = pipeline_config_url)
     pipeline_config_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
-    ssh_key_download_task = download_op(url = ssh_key_url)
-    ssh_key_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
     
     upload_generator_op = comp.create_component_from_func(
             func = upload_generator_func,

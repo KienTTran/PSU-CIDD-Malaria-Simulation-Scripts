@@ -16,57 +16,36 @@ implementation:
       program_path=$(mktemp)
       printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
-    - |
-      def upload_generator_func(pipeline_config):
-          import yaml
-          import os
-
-          params = 0
-          print("Reading " + pipeline_config)
-          with open(pipeline_config,'r') as file:
-              params =  yaml.full_load(file)
-
-          generator_build_parameters = params['generator']['build']['parameters']
-          generator_build_parameter_str = ''
-          if generator_build_parameters != None:
-              for parameter in generator_build_parameters:
-                  generator_build_parameter_str += ' ' + str(generator_build_parameters)
-
-          generator_config_parameters = params['generator']['config']['parameters']
-          generator_config_parameter_str = ''
-          if generator_config_parameters != None:
-              for parameter in generator_config_parameters:
-                  generator_config_parameter_str += ' ' + str(parameter)
-
-          cluster_username = params['ssh']['username']
-          cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-          upload_file_pairs = params['upload']['files']
-          cluster_upload_file_path = []
-          cluster_upload_mkdir_path = []
-          for pair in upload_file_pairs:
-              if type(pair) == str:
-                  cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,pair))
-              else:
-                  for key in pair.keys():
-                      upload_path = key
-                      upload_files = pair[key]
-                      cluster_upload_mkdir_path.append(os.path.join(cluster_home_path,upload_path))
-                      for upload_file in upload_files:
-                          cluster_file_path = os.path.join(os.path.join(cluster_home_path,upload_path),upload_file)
-                          cluster_upload_file_path.append(cluster_file_path)
-                          print(upload_file + ' --> ' + cluster_file_path)
-
-          for file_path in cluster_upload_file_path:
-              print('Cluster file path (upload): ' + file_path)
-          for file_path in cluster_upload_mkdir_path:
-              print('Cluster file path (create): ' + file_path)
-
-      import argparse
-      _parser = argparse.ArgumentParser(prog='Upload generator func', description='')
-      _parser.add_argument("--pipeline-config", dest="pipeline_config", type=str, required=True, default=argparse.SUPPRESS)
-      _parsed_args = vars(_parser.parse_args())
-
-      _outputs = upload_generator_func(**_parsed_args)
+    - "def upload_generator_func(pipeline_config):\n    import yaml\n    import os\n\
+      \n    params = 0\n    print(\"Reading \" + pipeline_config)\n    with open(pipeline_config,'r')\
+      \ as file:\n        params =  yaml.full_load(file)\n\n    generator_build_parameters\
+      \ = params['generator']['build']['parameters']\n    generator_build_parameter_str\
+      \ = ''\n    if generator_build_parameters != None:\n        for parameter in\
+      \ generator_build_parameters:\n            generator_build_parameter_str +=\
+      \ ' ' + str(generator_build_parameters)\n\n    generator_config_parameters =\
+      \ params['generator']['config']['parameters']\n    generator_config_parameter_str\
+      \ = ''\n    if generator_config_parameters != None:\n        for parameter in\
+      \ generator_config_parameters:\n            generator_config_parameter_str +=\
+      \ ' ' + str(parameter)\n\n    cluster_username = params['ssh']['username']\n\
+      \    cluster_home_path = \"/storage/home/\" + cluster_username[0] + \"/\" +\
+      \ cluster_username\n    upload_file_pairs = params['remote']['files']\n\n  \
+      \  cluster_path_src = []\n    cluster_path_dst = []\n    cluster_mkdir_path\
+      \ = []\n    for pair in upload_file_pairs:\n        if type(pair) == str:\n\
+      \            cluster_mkdir_path.append(os.path.join(cluster_home_path,pair))\n\
+      \        else:\n            for key in pair.keys():\n                path =\
+      \ key\n                src_files = pair[key]\n                cluster_mkdir_path.append(os.path.join(cluster_home_path,path))\n\
+      \                for src_file in src_files:\n                    cluster_file_dst_path\
+      \ = os.path.join(cluster_home_path,path)\n                    cluster_path_dst.append(cluster_file_dst_path)\n\
+      \                    cluster_path_src.append(src_file)\n                   \
+      \ print(src_file + ' --> ' + cluster_file_dst_path)\n\n    for file_path in\
+      \ cluster_path_src:\n        print('Cluster file path (transfer from): ' + file_path)\
+      \                    \n    for file_path in cluster_path_dst:\n        print('Cluster\
+      \ file path (transfer to): ' + file_path)\n    for file_path in cluster_mkdir_path:\n\
+      \        print('Cluster file path (create): ' + file_path)\n\nimport argparse\n\
+      _parser = argparse.ArgumentParser(prog='Upload generator func', description='')\n\
+      _parser.add_argument(\"--pipeline-config\", dest=\"pipeline_config\", type=str,\
+      \ required=True, default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\
+      \n_outputs = upload_generator_func(**_parsed_args)\n"
     args:
     - --pipeline-config
     - {inputPath: pipeline_config}
