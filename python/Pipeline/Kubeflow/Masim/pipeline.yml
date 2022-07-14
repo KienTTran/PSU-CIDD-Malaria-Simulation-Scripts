@@ -3,11 +3,15 @@ ssh:
     username: &username ktt5121
 
 project:
-    - Github2/PSU-CIDD-Malaria-Simulation-Test2:
+    - &project Github2/PSU-CIDD-Malaria-Simulation-Test2:
         exe:
-            path: build/bin/MaSim
-            parameters:
-            - '-r ValidationReporter'
+            build:
+                path: build/bin/MaSim
+                parameters:
+            run: 
+                path: work/Pipeline_1/bin/MaSim
+                parameters:
+                - '-r ValidationReporter'
         repo:
             url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
             branch: dev
@@ -21,19 +25,21 @@ remote:
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/input.yml
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/job_template.template
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/submit_all_jobs.template
-    - work/Pipeline_1/build:
+    - *project:
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/generate_build_script.py
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/build.template
         
 generator:
-    - work/Pipeline_1/build:
+    - *project:
         - script:
             name: generate_build_script.py
             parameters:
             - build.template
             - *username
             - build.sh
-        - bash: 'ls -l'
+        - bash: 'chmod +x build.sh'
+        - script:
+            name: build.sh
     - work/Pipeline_1/bin:
         - script:
             name: generate_configs.py
@@ -45,8 +51,11 @@ generator:
             - Pipeline_1
             - job_template.template
             - submit_all_jobs.template
-        - bash: 'ls -l'
+        - bash: 'ls -l && cp job_template.pbs ../raw/ && cp submit_all_jobs.pbs ../raw/'
         
+scheduler:
+    - work/Pipeline_1/raw:
+        - submit_all_jobs.pbs
 
     
         

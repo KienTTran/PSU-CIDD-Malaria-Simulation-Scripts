@@ -15,14 +15,17 @@ ssh_key_url = \
 ''
 
 def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTuple('outputs', [
-                                                                                ('remote_repos', list),
-                                                                                ('remote_exes', list),
+                                                                                ('remote_repo', list),
+                                                                                ('remote_exe_build', list),
+                                                                                ('remote_exe_run', list),
                                                                                 ('remote_files', list),
                                                                                 ('remote_dirs', list),
                                                                                 ('remote_generators', list)]):
     import yaml
     import os
     from collections import namedtuple
+    
+    print('parsing pipeline')
     
     params = 0
     print("Reading " + pipeline_config)
@@ -34,7 +37,8 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     
     #Repo
     cluster_repo = []
-    cluster_exe = []
+    cluster_exe_build = []
+    cluster_exe_run = []
     for pair in params['project']:
         if type(pair) == str:
             print('Project is empty')
@@ -48,32 +52,49 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                     if pj_exe == None:
                         print('Execution is empty')
                     else:
-                        pj_exe_path = pair[p_key]['exe']['path']
-                        if pj_exe_path == None:
-                            print('Execution path is empty')
+                        pj_exe_build_path = pair[p_key]['exe']['build']['path']
+                        pj_exe_run_path = pair[p_key]['exe']['run']['path']
+                        if pj_exe_build_path == None or pj_exe_run_path == None:
+                            print('Execution build/run path is empty')
                         else:
-                            pj_exe_parameters = pair[p_key]['exe']['parameters']
+                            #Build
                             parameter_str = ''
-                            if pj_exe_parameters != None:
-                                for parameter in pj_exe_parameters:
-                                    parameter_str += ' ' + parameter
-                            pj_exe_with_parameters = pj_exe_path + ' ' + parameter_str
-                            cluster_exe.append({os.path.join(cluster_home_path,pj_path):pj_exe_with_parameters})
-                            pj_repo = pair[p_key]['repo']
-                            if pj_repo == None:
-                                print('Repo is empty')
+                            try:
+                                pj_exe_build_parameters = pair[p_key]['exe']['build']['parameters']
+                                if pj_exe_build_parameters != None:
+                                    for parameter in pj_exe_build_parameters:
+                                        parameter_str += ' ' + parameter
+                            except Exception as e:
+                                print('Missing ' + str(e) + ', use empty parameters')
+                            pj_exe_build_with_parameters = pj_exe_build_path + ' ' + parameter_str
+                            cluster_exe_build.append({os.path.join(cluster_home_path,pj_path):pj_exe_build_with_parameters})
+                            #Run
+                            parameter_str = ''
+                            try:
+                                pj_exe_run_parameters = pair[p_key]['exe']['run']['parameters']
+                                if pj_exe_run_parameters != None:
+                                    for parameter in pj_exe_run_parameters:
+                                        parameter_str += ' ' + parameter
+                            except Exception as e:
+                                print('Missing ' + str(e) + ', use empty parameters')
+                            pj_exe_run_with_parameters = pj_exe_run_path + ' ' + parameter_str
+                            cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})
+                                
+                        pj_repo = pair[p_key]['repo']
+                        if pj_repo == None:
+                            print('Repo is empty')
+                        else:
+                            pj_repo_url = pair[p_key]['repo']['url']
+                            if pj_repo_url == None:
+                                print('Repo URL is empty')
                             else:
-                                pj_repo_url = pair[p_key]['repo']['url']
-                                if pj_repo_url == None:
-                                    print('Repo URL is empty')
+                                pj_repo_branch = pair[p_key]['repo']['branch']
+                                pj_repo_git = ''
+                                if pj_repo_branch == None:
+                                    pj_repo_git = pj_repo_url
                                 else:
-                                    pj_repo_branch = pair[p_key]['repo']['branch']
-                                    pj_repo_git = ''
-                                    if pj_repo_branch == None:
-                                        pj_repo_git = pj_repo_url
-                                    else:
-                                        pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
-                                    cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
+                                    pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
+                                cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
                     
     
     #Files
@@ -98,46 +119,72 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
             working_path = gen_key
             gen_value = gen_pair[gen_key]
             script_with_parameters = ''
+            is_valid = False
             if gen_value != None:
                 for value in gen_value:
                     for v_key in value.keys():
-                        if v_key == 'bash':
+                        script = ''
+                        script_name = ''
+                        if v_key =='bash':
                             bash_str = ''
                             if value[v_key] != None:
-                                bash_str = value[v_key]
-                                cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})
-                            else:
-                                print('Bash cmd is empty')
+                                script_name = value[v_key]
+                                script = script_name
+                                is_valid = True
                         elif v_key == 'script':
                             if value[v_key] != None:
-                                script_name = value[v_key]['name']
-                                if script_name != None:
-                                    script_parameters = value[v_key]['parameters']
+                                try:
+                                    script_name = value[v_key]['name']
+                                    script_exe = ''
                                     parameter_str = ''
-                                    if script_parameters != None:
-                                        for parameter in script_parameters:
-                                            parameter_str += ' ' + parameter
-                                    script_with_parameters = script_name + parameter_str
-                                    print(os.path.join(cluster_home_path,working_path),script_with_parameters)
-                                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
-                                else:
-                                    print('Script name is empty')
+                                    if script_name != None and script_name != '':
+                                        script_ext = script_name.split('.')[-1]
+                                        if script_ext == 'py':
+                                            script_exe = 'python3'
+                                        if script_ext == 'sh':
+                                            script_exe = 'sh'
+                                        try:
+                                            script_parameters = value[v_key]['parameters']
+                                            if script_parameters != None:
+                                                for parameter in script_parameters:
+                                                    parameter_str += ' ' + parameter
+                                            else:
+                                                print('No parameters')     
+                                        except Exception as e:
+                                            print('Missing: ' + str(e) + ', use empty parameters')
+                                        script = script_exe + ' ' + script_name + parameter_str
+                                        is_valid = True
+                                    else:
+                                        print('Script name is empty, skipped')   
+                                except Exception as e:
+                                    print('Missing: ' + str(e) + ', skipped')
                             else:
-                                print('Script is empty')
+                                print('Script is empty, skipped')
+                        if script_with_parameters == '':
+                            script_with_parameters = script
+                        else:
+                            script_with_parameters = script_with_parameters + ' && ' + script
+                if is_valid:
+                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
             else:
-                print('Missing script when path is available')
+                print('Missing script when path is available, skipped')
                  
-    remote_output = namedtuple('outputs', ['remote_repo','remote_exe','remote_files','remote_dirs','remote_generators']) 
+    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run','remote_files','remote_dirs','remote_generators']) 
     
     #Repo
     for file_path in cluster_repo:
         for key in file_path.keys():
             print('Cluster repo (clone): ' + key + ' --> ' + file_path[key]) 
     
-    #Repo        
-    for file_path in cluster_exe:
+    #Build       
+    for file_path in cluster_exe_build:
         for key in file_path.keys():
-            print('Cluster repo (run): ' + key + ' --> ' + file_path[key])           
+            print('Cluster exe (build): ' + key + ' --> ' + file_path[key]) 
+            
+    #Run       
+    for file_path in cluster_exe_run:
+        for key in file_path.keys():
+            print('Cluster exe (run): ' + key + ' --> ' + file_path[key])          
     
     #Files
     for file_path in cluster_files:
@@ -153,19 +200,25 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
         for working_path in generators.keys():
             print('cd ' + working_path + ' ' + generators[working_path])
                 
-    return remote_output(cluster_repo,cluster_exe,cluster_files,cluster_dirs,cluster_generators)
+    return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,cluster_files,cluster_dirs,cluster_generators)
     
 
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                         ssh_key: comp.InputArtifact(),
-                        remote_repos: list,
-                        remote_exes: list,
+                        remote_repo: list,
+                        remote_exe_build: list,
+                        remote_exe_run: list,
                         remote_files: list,
                         remote_dirs: list,
                         remote_generators: list):
     import paramiko
     import yaml
     import os
+    
+    print('Running on cluster')
+    
+    def cmd_git_clone(repo_info, dir_dst):
+        return 'git clone' + repo_info + ' ' + dir_dst
     
     def cmd_wget(file_src, dir_dst):
         return 'wget ' + file_src + ' -P ' + dir_dst
@@ -262,13 +315,17 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
         
     
-    for files in remote_repos:
-        for working_path in files.keys():
-            print('git clone ' + files[working_path] + ' ' + working_path)
+    for repo in remote_repo:
+        for working_path in repo.keys():
+            print('git clone ' + repo[working_path] + ' ' + working_path)
             
-    for files in remote_exes:
-        for working_path in files.keys():
-            print('cd ' + working_path + ' ./' + files[working_path])
+    for build in remote_exe_build:
+        for working_path in build.keys():
+            print('build ' + working_path + ' ./' + build[working_path])
+    
+    for run in remote_exe_run:
+        for working_path in run.keys():
+            print('run ' + working_path + ' ./' + run[working_path])
             
     for dirs in remote_dirs:
         print('mkdir_nest ' + dirs)
@@ -284,11 +341,12 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     # #Connect to server
     # client = PipelineClient()
     # ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
-    # client.run_cmd_remotely('ls -l')
+    # client.run_cmd_remotely('ls -l')    
     
-    
-    # #Pull repo 
-    
+    # #Pull repo
+    # for repos in remote_repos:
+    #     for working_path in repos.keys():
+    #         client.run_cmd_remotely(cmd_git_clone(repos[working_path],working_path))
     
     # #Create dirs
     # for file_path in remote_dirs:
@@ -328,8 +386,9 @@ def pipeline():
     
     run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
                                             ssh_key = ssh_key_download_task.outputs['data'],
-                                            remote_repos = parse_pipeline_config_task.outputs['remote_repos'],
-                                            remote_exes = parse_pipeline_config_task.outputs['remote_exes'],
+                                            remote_repo = parse_pipeline_config_task.outputs['remote_repo'],
+                                            remote_exe_build = parse_pipeline_config_task.outputs['remote_exe_build'],
+                                            remote_exe_run = parse_pipeline_config_task.outputs['remote_exe_run'],
                                             remote_files = parse_pipeline_config_task.outputs['remote_files'],
                                             remote_dirs = parse_pipeline_config_task.outputs['remote_dirs'],
                                             remote_generators = parse_pipeline_config_task.outputs['remote_generators'],
@@ -357,8 +416,9 @@ with open('pipeline.yml','r') as file:
 cluster_username = params['ssh']['username']
 cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
 
-cluster_project_repo = []
-cluster_project_exe = []
+cluster_repo = []
+cluster_exe_build = []
+cluster_exe_run = []
 for pair in params['project']:
     if type(pair) == str:
         print('Project is empty')
@@ -372,32 +432,49 @@ for pair in params['project']:
                 if pj_exe == None:
                     print('Execution is empty')
                 else:
-                    pj_exe_path = pair[p_key]['exe']['path']
-                    if pj_exe_path == None:
-                        print('Execution path is empty')
+                    pj_exe_build_path = pair[p_key]['exe']['build']['path']
+                    pj_exe_run_path = pair[p_key]['exe']['run']['path']
+                    if pj_exe_build_path == None or pj_exe_run_path == None:
+                        print('Execution build/run path is empty')
                     else:
-                        pj_exe_parameters = pair[p_key]['exe']['parameters']
+                        #Build
                         parameter_str = ''
-                        if pj_exe_parameters != None:
-                            for parameter in pj_exe_parameters:
-                                parameter_str += ' ' + parameter
-                        pj_exe_with_parameters = pj_exe_path + ' ' + parameter_str
-                        cluster_project_exe.append({os.path.join(cluster_home_path,pj_path):pj_exe_with_parameters})
-                        pj_repo = pair[p_key]['repo']
-                        if pj_repo == None:
-                            print('Repo is empty')
+                        try:
+                            pj_exe_build_parameters = pair[p_key]['exe']['build']['parameters']
+                            if pj_exe_build_parameters != None:
+                                for parameter in pj_exe_build_parameters:
+                                    parameter_str += ' ' + parameter
+                        except Exception as e:
+                            print('Missing ' + str(e) + ', use empty parameters')
+                        pj_exe_build_with_parameters = pj_exe_build_path + ' ' + parameter_str
+                        cluster_exe_build.append({os.path.join(cluster_home_path,pj_path):pj_exe_build_with_parameters})
+                        #Run
+                        parameter_str = ''
+                        try:
+                            pj_exe_run_parameters = pair[p_key]['exe']['run']['parameters']
+                            if pj_exe_run_parameters != None:
+                                for parameter in pj_exe_run_parameters:
+                                    parameter_str += ' ' + parameter
+                        except Exception as e:
+                            print('Missing ' + str(e) + ', use empty parameters')
+                        pj_exe_run_with_parameters = pj_exe_run_path + ' ' + parameter_str
+                        cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})
+                            
+                    pj_repo = pair[p_key]['repo']
+                    if pj_repo == None:
+                        print('Repo is empty')
+                    else:
+                        pj_repo_url = pair[p_key]['repo']['url']
+                        if pj_repo_url == None:
+                            print('Repo URL is empty')
                         else:
-                            pj_repo_url = pair[p_key]['repo']['url']
-                            if pj_repo_url == None:
-                                print('Repo URL is empty')
+                            pj_repo_branch = pair[p_key]['repo']['branch']
+                            pj_repo_git = ''
+                            if pj_repo_branch == None:
+                                pj_repo_git = pj_repo_url
                             else:
-                                pj_repo_branch = pair[p_key]['repo']['branch']
-                                pj_repo_git = ''
-                                if pj_repo_branch == None:
-                                    pj_repo_git = pj_repo_url
-                                else:
-                                    pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
-                                cluster_project_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
+                                pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
+                            cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
                 
     
 #%%
@@ -438,6 +515,9 @@ for file_path in cluster_mkdir:
 import yaml
 import os
 
+def cmd_generator(working_dir, generator_script):
+    return 'cd ' + working_dir + '; ' + generator_script
+        
 params = 0    
 print("Reading " + 'pipeline.yml')
 with open('pipeline.yml','r') as file:
@@ -451,36 +531,60 @@ for gen_pair in params['generator']:
         working_path = gen_key
         gen_value = gen_pair[gen_key]
         script_with_parameters = ''
+        is_valid = False
         if gen_value != None:
             for value in gen_value:
                 for v_key in value.keys():
+                    script = ''
+                    script_name = ''
                     if v_key =='bash':
                         bash_str = ''
                         if value[v_key] != None:
-                            bash_str = value[v_key]
-                            cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})
+                            script_name = value[v_key]
+                            script = script_name
+                            is_valid = True
                     elif v_key == 'script':
                         if value[v_key] != None:
-                            script_name = value[v_key]['name']
-                            if script_name != None:
-                                script_parameters = value[v_key]['parameters']
+                            try:
+                                script_name = value[v_key]['name']
+                                script_exe = ''
                                 parameter_str = ''
-                                if script_parameters != None:
-                                    for parameter in script_parameters:
-                                        parameter_str += ' ' + parameter
-                                script_with_parameters = script_name + parameter_str
-                                print(os.path.join(cluster_home_path,working_path),script_with_parameters)
-                                cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
-                            else:
-                                print('Script name is empty')
+                                if script_name != None and script_name != '':
+                                    script_ext = script_name.split('.')[-1]
+                                    if script_ext == 'py':
+                                        script_exe = 'python3'
+                                    if script_ext == 'sh':
+                                        script_exe = 'sh'
+                                    try:
+                                        script_parameters = value[v_key]['parameters']
+                                        if script_parameters != None:
+                                            for parameter in script_parameters:
+                                                parameter_str += ' ' + parameter
+                                        else:
+                                            print('No parameters')     
+                                    except Exception as e:
+                                        print('Missing: ' + str(e) + ', use empty parameters')
+                                    script = script_exe + ' ' + script_name + parameter_str
+                                    is_valid = True
+                                else:
+                                    print('Script name is empty, skipped')   
+                            except Exception as e:
+                                print('Missing: ' + str(e) + ', skipped')
                         else:
-                            print('Script is empty')
+                            print('Script is empty, skipped')
+                    if script_with_parameters == '':
+                        script_with_parameters = script
+                    else:
+                        script_with_parameters = script_with_parameters + ' && ' + script
+            if is_valid:
+                cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
         else:
-            print('Missing script when path is available')
+            print('Missing script when path is available, skipped')
             
 for generators in cluster_generators:
     for working_path in generators.keys():
-        print('cd ' + working_path + '; python3 ' + generators[working_path])
+        # print('cd ' + working_path + '; python3 ' + generators[working_path])
+        print(cmd_generator(working_path,generators[working_path]))
         
             
                 

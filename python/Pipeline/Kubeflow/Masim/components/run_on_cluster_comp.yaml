@@ -26,14 +26,14 @@ implementation:
       \                        remote_repos,\n                        remote_exes,\n\
       \                        remote_files,\n                        remote_dirs,\n\
       \                        remote_generators):\n    import paramiko\n    import\
-      \ yaml\n    import os\n\n    def cmd_wget(file_src, dir_dst):\n        return\
-      \ 'wget ' + file_src + ' -P ' + dir_dst\n\n    def cmd_generator(working_dir,\
-      \ generator_script):\n        if '.' in generator_script.split(' ')[0]:\n  \
-      \          gen_ext = generator_script.split(' ')[0].split['.'][1]\n        \
-      \    if gen_ext == 'py':\n                return 'cd ' + working_dir + '; python3\
-      \ ' + generator_script\n        else:#is bash file\n            return 'cd '\
-      \ + working_dir + '; ' + generator_script\n\n    class PipelineClient():\n \
-      \       ssh = paramiko.SSHClient()\n        sftp = 0\n\n        def disconnect(self):\n\
+      \ yaml\n    import os\n\n    print('Running on cluster')\n\n    def cmd_wget(file_src,\
+      \ dir_dst):\n        return 'wget ' + file_src + ' -P ' + dir_dst\n\n    def\
+      \ cmd_generator(working_dir, generator_script):\n        if '.' in generator_script.split('\
+      \ ')[0]:\n            gen_ext = generator_script.split(' ')[0].split['.'][1]\n\
+      \            if gen_ext == 'py':\n                return 'cd ' + working_dir\
+      \ + '; python3 ' + generator_script\n        else:#is bash file\n          \
+      \  return 'cd ' + working_dir + '; ' + generator_script\n\n    class PipelineClient():\n\
+      \        ssh = paramiko.SSHClient()\n        sftp = 0\n\n        def disconnect(self):\n\
       \            self.ssh.close()\n            self.sftp.close()\n\n        def\
       \ run_cmd_remotely(self,command):\n            print(\"[Remote] >>> \", command)\n\
       \            (stdin, stdout, stderr) = self.ssh.exec_command(command,get_pty=True)\n\
@@ -74,10 +74,10 @@ implementation:
       \ = params['ssh']['address']\n    cluster_username = params['ssh']['username']\n\
       \    cluster_home_path = \"/storage/home/\" + cluster_username[0] + \"/\" +\
       \ cluster_username\n    print('Cluster SSH info: ' + cluster_username + '@'\
-      \ + cluster_address)\n\n    for files in remote_repos:\n        for working_path\
-      \ in files.keys():\n            print('git clone ' + files[working_path] + '\
-      \ ' + working_path)\n\n    for files in remote_exes:\n        for working_path\
-      \ in files.keys():\n            print('cd ' + working_path + ' ./' + files[working_path])\n\
+      \ + cluster_address)\n\n    for repos in remote_repos:\n        for working_path\
+      \ in repos.keys():\n            print('git clone ' + repos[working_path] + '\
+      \ ' + working_path)\n\n    for exes in remote_exes:\n        for working_path\
+      \ in exes.keys():\n            print('cd ' + working_path + ' ./' + exes[working_path])\n\
       \n    for dirs in remote_dirs:\n        print('mkdir_nest ' + dirs)\n\n    for\
       \ files in remote_files:\n        for working_path in files.keys():\n      \
       \      print('wget ' + files[working_path] + ' -P ' + working_path)\n\n    for\
