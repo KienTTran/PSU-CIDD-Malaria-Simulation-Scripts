@@ -15,6 +15,8 @@ ssh_key_url = \
 ''
 
 def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTuple('outputs', [
+                                                                                ('remote_repos', list),
+                                                                                ('remote_exes', list),
                                                                                 ('remote_files', list),
                                                                                 ('remote_dirs', list),
                                                                                 ('remote_generators', list)]):
@@ -30,9 +32,54 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     cluster_username = params['ssh']['username']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     
+    #Repo
+    cluster_repo = []
+    cluster_exe = []
+    for pair in params['project']:
+        if type(pair) == str:
+            print('Project is empty')
+        else:
+            for p_key in pair.keys():
+                if pair[p_key] == None:
+                    print('Project is empty')
+                else:
+                    pj_path = p_key
+                    pj_exe = pair[p_key]['exe']
+                    if pj_exe == None:
+                        print('Execution is empty')
+                    else:
+                        pj_exe_path = pair[p_key]['exe']['path']
+                        if pj_exe_path == None:
+                            print('Execution path is empty')
+                        else:
+                            pj_exe_parameters = pair[p_key]['exe']['parameters']
+                            parameter_str = ''
+                            if pj_exe_parameters != None:
+                                for parameter in pj_exe_parameters:
+                                    parameter_str += ' ' + parameter
+                            pj_exe_with_parameters = pj_exe_path + ' ' + parameter_str
+                            cluster_exe.append({os.path.join(cluster_home_path,pj_path):pj_exe_with_parameters})
+                            pj_repo = pair[p_key]['repo']
+                            if pj_repo == None:
+                                print('Repo is empty')
+                            else:
+                                pj_repo_url = pair[p_key]['repo']['url']
+                                if pj_repo_url == None:
+                                    print('Repo URL is empty')
+                                else:
+                                    pj_repo_branch = pair[p_key]['repo']['branch']
+                                    pj_repo_git = ''
+                                    if pj_repo_branch == None:
+                                        pj_repo_git = pj_repo_url
+                                    else:
+                                        pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
+                                    cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
+                    
+    
+    #Files
     cluster_files = []
     cluster_dirs = []
-    for pair in params['remote']['files']:
+    for pair in params['remote']:
         if type(pair) == str:
             cluster_dirs.append(os.path.join(cluster_home_path,pair))
         else:
@@ -43,7 +90,8 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                 for src_file in src_files:
                     cluster_files.append({os.path.join(cluster_home_path,path) : src_file})
                     print(src_file + ' --> ' + os.path.join(cluster_home_path,path))
-                        
+                    
+    #Generators                    
     cluster_generators = []
     for gen_pair in params['generator']:
         for gen_key in gen_pair.keys():
@@ -79,30 +127,56 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
             else:
                 print('Missing script when path is available')
                  
-    remote_output = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators']) 
+    remote_output = namedtuple('outputs', ['remote_repo','remote_exe','remote_files','remote_dirs','remote_generators']) 
     
+    #Repo
+    for file_path in cluster_repo:
+        for key in file_path.keys():
+            print('Cluster repo (clone): ' + key + ' --> ' + file_path[key]) 
+    
+    #Repo        
+    for file_path in cluster_exe:
+        for key in file_path.keys():
+            print('Cluster repo (run): ' + key + ' --> ' + file_path[key])           
+    
+    #Files
     for file_path in cluster_files:
         for key in file_path.keys():
             print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])
             
+    #Dirs
     for file_path in cluster_dirs:
         print('Cluster file path (create): ' + file_path)
         
+    #Generators
     for generators in cluster_generators:
         for working_path in generators.keys():
             print('cd ' + working_path + ' ' + generators[working_path])
                 
-    return remote_output(cluster_files,cluster_dirs,cluster_generators)
+    return remote_output(cluster_repo,cluster_exe,cluster_files,cluster_dirs,cluster_generators)
     
 
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                         ssh_key: comp.InputArtifact(),
+                        remote_repos: list,
+                        remote_exes: list,
                         remote_files: list,
                         remote_dirs: list,
                         remote_generators: list):
     import paramiko
     import yaml
     import os
+    
+    def cmd_wget(file_src, dir_dst):
+        return 'wget ' + file_src + ' -P ' + dir_dst
+    
+    def cmd_generator(working_dir, generator_script):
+        if '.' in generator_script.split(' ')[0]:
+            gen_ext = generator_script.split(' ')[0].split['.'][1]
+            if gen_ext == 'py':
+                return 'cd ' + working_dir + '; python3 ' + generator_script
+        else:#is bash file
+            return 'cd ' + working_dir + '; ' + generator_script
     
     class PipelineClient():
         ssh = paramiko.SSHClient()
@@ -187,6 +261,15 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
         
+    
+    for files in remote_repos:
+        for working_path in files.keys():
+            print('git clone ' + files[working_path] + ' ' + working_path)
+            
+    for files in remote_exes:
+        for working_path in files.keys():
+            print('cd ' + working_path + ' ./' + files[working_path])
+            
     for dirs in remote_dirs:
         print('mkdir_nest ' + dirs)
         
@@ -198,14 +281,29 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
         for working_path in generators.keys():
             print('cd ' + working_path + ' ' + generators[working_path])
             
-    # '''Connect to server '''
+    # #Connect to server
     # client = PipelineClient()
     # ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
     # client.run_cmd_remotely('ls -l')
     
-    # for file_path in cluster_mkdir_path:
+    
+    # #Pull repo 
+    
+    
+    # #Create dirs
+    # for file_path in remote_dirs:
     #     client.mkdir_nested(file_path)
     #     print('Created cluster path: ' + file_path)
+        
+    # #Copy files
+    # for files in remote_files:
+    #     for working_path in files.keys():
+    #         client.run_cmd_remotely(cmd_wget(files[working_path], working_path))
+            
+    # #Run generators    
+    # for generators in remote_generators:
+    #     for working_path in generators.keys():
+    #         client.run_cmd_remotely(cmd_generator(working_path,generators[working_path]))
     
     
 def pipeline():        
@@ -230,6 +328,8 @@ def pipeline():
     
     run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
                                             ssh_key = ssh_key_download_task.outputs['data'],
+                                            remote_repos = parse_pipeline_config_task.outputs['remote_repos'],
+                                            remote_exes = parse_pipeline_config_task.outputs['remote_exes'],
                                             remote_files = parse_pipeline_config_task.outputs['remote_files'],
                                             remote_dirs = parse_pipeline_config_task.outputs['remote_dirs'],
                                             remote_generators = parse_pipeline_config_task.outputs['remote_generators'],
@@ -253,14 +353,69 @@ params = 0
 print("Reading " + 'pipeline.yml')
 with open('pipeline.yml','r') as file:
     params =  yaml.full_load(file)
+
+cluster_username = params['ssh']['username']
+cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+
+cluster_project_repo = []
+cluster_project_exe = []
+for pair in params['project']:
+    if type(pair) == str:
+        print('Project is empty')
+    else:
+        for p_key in pair.keys():
+            if pair[p_key] == None:
+                print('Project is empty')
+            else:
+                pj_path = p_key
+                pj_exe = pair[p_key]['exe']
+                if pj_exe == None:
+                    print('Execution is empty')
+                else:
+                    pj_exe_path = pair[p_key]['exe']['path']
+                    if pj_exe_path == None:
+                        print('Execution path is empty')
+                    else:
+                        pj_exe_parameters = pair[p_key]['exe']['parameters']
+                        parameter_str = ''
+                        if pj_exe_parameters != None:
+                            for parameter in pj_exe_parameters:
+                                parameter_str += ' ' + parameter
+                        pj_exe_with_parameters = pj_exe_path + ' ' + parameter_str
+                        cluster_project_exe.append({os.path.join(cluster_home_path,pj_path):pj_exe_with_parameters})
+                        pj_repo = pair[p_key]['repo']
+                        if pj_repo == None:
+                            print('Repo is empty')
+                        else:
+                            pj_repo_url = pair[p_key]['repo']['url']
+                            if pj_repo_url == None:
+                                print('Repo URL is empty')
+                            else:
+                                pj_repo_branch = pair[p_key]['repo']['branch']
+                                pj_repo_git = ''
+                                if pj_repo_branch == None:
+                                    pj_repo_git = pj_repo_url
+                                else:
+                                    pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
+                                cluster_project_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
+                
+    
+#%%
+import yaml
+import os
+from collections import namedtuple
+
+params = 0
+print("Reading " + 'pipeline.yml')
+with open('pipeline.yml','r') as file:
+    params =  yaml.full_load(file)
         
 cluster_username = params['ssh']['username']
 cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-upload_file_pairs = params['remote']['files']
 
 cluster_files = []
 cluster_mkdir = []
-for pair in upload_file_pairs:
+for pair in params['remote']:
     if type(pair) == str:
         cluster_mkdir.append(os.path.join(cluster_home_path,pair))
     else:

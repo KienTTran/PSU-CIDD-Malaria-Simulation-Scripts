@@ -2,6 +2,8 @@ name: Parse pipeline config func
 inputs:
 - {name: pipeline_config}
 outputs:
+- {name: remote_repos, type: JsonArray}
+- {name: remote_exes, type: JsonArray}
 - {name: remote_files, type: JsonArray}
 - {name: remote_dirs, type: JsonArray}
 - {name: remote_generators, type: JsonArray}
@@ -25,21 +27,49 @@ implementation:
       Reading \" + pipeline_config)\n    with open(pipeline_config,'r') as file:\n\
       \        params =  yaml.full_load(file)\n\n    cluster_username = params['ssh']['username']\n\
       \    cluster_home_path = \"/storage/home/\" + cluster_username[0] + \"/\" +\
-      \ cluster_username\n\n    cluster_files = []\n    cluster_dirs = []\n    for\
-      \ pair in params['remote']['files']:\n        if type(pair) == str:\n      \
-      \      cluster_dirs.append(os.path.join(cluster_home_path,pair))\n        else:\n\
-      \            for key in pair.keys():\n                path = key\n         \
-      \       src_files = pair[key]\n                cluster_dirs.append(os.path.join(cluster_home_path,path))\n\
+      \ cluster_username\n\n    #Repo\n    cluster_repo = []\n    cluster_exe = []\n\
+      \    for pair in params['project']:\n        if type(pair) == str:\n       \
+      \     print('Project is empty')\n        else:\n            for p_key in pair.keys():\n\
+      \                if pair[p_key] == None:\n                    print('Project\
+      \ is empty')\n                else:\n                    pj_path = p_key\n \
+      \                   pj_exe = pair[p_key]['exe']\n                    if pj_exe\
+      \ == None:\n                        print('Execution is empty')\n          \
+      \          else:\n                        pj_exe_path = pair[p_key]['exe']['path']\n\
+      \                        if pj_exe_path == None:\n                         \
+      \   print('Execution path is empty')\n                        else:\n      \
+      \                      pj_exe_parameters = pair[p_key]['exe']['parameters']\n\
+      \                            parameter_str = ''\n                          \
+      \  if pj_exe_parameters != None:\n                                for parameter\
+      \ in pj_exe_parameters:\n                                    parameter_str +=\
+      \ ' ' + parameter\n                            pj_exe_with_parameters = pj_exe_path\
+      \ + ' ' + parameter_str\n                            cluster_exe.append({os.path.join(cluster_home_path,pj_path):pj_exe_with_parameters})\n\
+      \                            pj_repo = pair[p_key]['repo']\n               \
+      \             if pj_repo == None:\n                                print('Repo\
+      \ is empty')\n                            else:\n                          \
+      \      pj_repo_url = pair[p_key]['repo']['url']\n                          \
+      \      if pj_repo_url == None:\n                                    print('Repo\
+      \ URL is empty')\n                                else:\n                  \
+      \                  pj_repo_branch = pair[p_key]['repo']['branch']\n        \
+      \                            pj_repo_git = ''\n                            \
+      \        if pj_repo_branch == None:\n                                      \
+      \  pj_repo_git = pj_repo_url\n                                    else:\n  \
+      \                                      pj_repo_git = pj_repo_url + ' -b ' +\
+      \ pj_repo_branch\n                                    cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})\n\
+      \n    #Files\n    cluster_files = []\n    cluster_dirs = []\n    for pair in\
+      \ params['remote']:\n        if type(pair) == str:\n            cluster_dirs.append(os.path.join(cluster_home_path,pair))\n\
+      \        else:\n            for key in pair.keys():\n                path =\
+      \ key\n                src_files = pair[key]\n                cluster_dirs.append(os.path.join(cluster_home_path,path))\n\
       \                for src_file in src_files:\n                    cluster_files.append({os.path.join(cluster_home_path,path)\
       \ : src_file})\n                    print(src_file + ' --> ' + os.path.join(cluster_home_path,path))\n\
-      \n    cluster_generators = []\n    for gen_pair in params['generator']:\n  \
-      \      for gen_key in gen_pair.keys():\n            working_path = gen_key\n\
-      \            gen_value = gen_pair[gen_key]\n            script_with_parameters\
-      \ = ''\n            if gen_value != None:\n                for value in gen_value:\n\
-      \                    for v_key in value.keys():\n                        if\
-      \ v_key == 'bash':\n                            bash_str = ''\n            \
-      \                if value[v_key] != None:\n                                bash_str\
-      \ = value[v_key]\n                                cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})\n\
+      \n    #Generators                    \n    cluster_generators = []\n    for\
+      \ gen_pair in params['generator']:\n        for gen_key in gen_pair.keys():\n\
+      \            working_path = gen_key\n            gen_value = gen_pair[gen_key]\n\
+      \            script_with_parameters = ''\n            if gen_value != None:\n\
+      \                for value in gen_value:\n                    for v_key in value.keys():\n\
+      \                        if v_key == 'bash':\n                            bash_str\
+      \ = ''\n                            if value[v_key] != None:\n             \
+      \                   bash_str = value[v_key]\n                              \
+      \  cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})\n\
       \                            else:\n                                print('Bash\
       \ cmd is empty')\n                        elif v_key == 'script':\n        \
       \                    if value[v_key] != None:\n                            \
@@ -56,14 +86,19 @@ implementation:
       \ print('Script name is empty')\n                            else:\n       \
       \                         print('Script is empty')\n            else:\n    \
       \            print('Missing script when path is available')\n\n    remote_output\
-      \ = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators'])\
-      \ \n\n    for file_path in cluster_files:\n        for key in file_path.keys():\n\
-      \            print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])\n\
-      \n    for file_path in cluster_dirs:\n        print('Cluster file path (create):\
-      \ ' + file_path)\n\n    for generators in cluster_generators:\n        for working_path\
+      \ = namedtuple('outputs', ['remote_repo','remote_exe','remote_files','remote_dirs','remote_generators'])\
+      \ \n\n    #Repo\n    for file_path in cluster_repo:\n        for key in file_path.keys():\n\
+      \            print('Cluster repo (clone): ' + key + ' --> ' + file_path[key])\
+      \ \n\n    #Repo        \n    for file_path in cluster_exe:\n        for key\
+      \ in file_path.keys():\n            print('Cluster repo (run): ' + key + ' -->\
+      \ ' + file_path[key])           \n\n    #Files\n    for file_path in cluster_files:\n\
+      \        for key in file_path.keys():\n            print('Cluster file path\
+      \ (transfer): ' + key + ' --> ' + file_path[key])\n\n    #Dirs\n    for file_path\
+      \ in cluster_dirs:\n        print('Cluster file path (create): ' + file_path)\n\
+      \n    #Generators\n    for generators in cluster_generators:\n        for working_path\
       \ in generators.keys():\n            print('cd ' + working_path + ' ' + generators[working_path])\n\
-      \n    return remote_output(cluster_files,cluster_dirs,cluster_generators)\n\n\
-      def _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
+      \n    return remote_output(cluster_repo,cluster_exe,cluster_files,cluster_dirs,cluster_generators)\n\
+      \ndef _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
       \ obj\n    import json\n\n    def default_serializer(obj):\n        if hasattr(obj,\
       \ 'to_struct'):\n            return obj.to_struct()\n        else:\n       \
       \     raise TypeError(\n                \"Object of type '%s' is not JSON serializable\
@@ -72,17 +107,20 @@ implementation:
       import argparse\n_parser = argparse.ArgumentParser(prog='Parse pipeline config\
       \ func', description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"\
       pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
-      ----output-paths\", dest=\"_output_paths\", type=str, nargs=3)\n_parsed_args\
+      ----output-paths\", dest=\"_output_paths\", type=str, nargs=5)\n_parsed_args\
       \ = vars(_parser.parse_args())\n_output_files = _parsed_args.pop(\"_output_paths\"\
       , [])\n\n_outputs = parse_pipeline_config_func(**_parsed_args)\n\n_output_serializers\
-      \ = [\n    _serialize_json,\n    _serialize_json,\n    _serialize_json,\n\n\
-      ]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n    try:\n\
-      \        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n  \
-      \      pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
+      \ = [\n    _serialize_json,\n    _serialize_json,\n    _serialize_json,\n  \
+      \  _serialize_json,\n    _serialize_json,\n\n]\n\nimport os\nfor idx, output_file\
+      \ in enumerate(_output_files):\n    try:\n        os.makedirs(os.path.dirname(output_file))\n\
+      \    except OSError:\n        pass\n    with open(output_file, 'w') as f:\n\
+      \        f.write(_output_serializers[idx](_outputs[idx]))\n"
     args:
     - --pipeline-config
     - {inputPath: pipeline_config}
     - '----output-paths'
+    - {outputPath: remote_repos}
+    - {outputPath: remote_exes}
     - {outputPath: remote_files}
     - {outputPath: remote_dirs}
     - {outputPath: remote_generators}

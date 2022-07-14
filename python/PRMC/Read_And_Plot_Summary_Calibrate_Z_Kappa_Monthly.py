@@ -10,7 +10,7 @@ import pandas as pd
 import numpy as np
 import math
 
-exp_number = '18_2'
+exp_number = '18_3'
 
 local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -56,7 +56,7 @@ for index,config in config_df.iterrows():
 data_plot = pd.DataFrame(data)
 data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z","beta"]
 
-data_plot["eir_log10"] = math.log10(data_plot.eir)
+data_plot["eir_log10"] = data_plot.eir.apply(lambda x: 0 if x == 0 else math.log10(x))
 #%%
 data_plot.to_csv(local_path + "data_dev_exp_" + str(exp_number) + ".csv",index=False)
 #%%

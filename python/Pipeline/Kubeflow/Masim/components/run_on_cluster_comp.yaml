@@ -2,6 +2,8 @@ name: Run on cluster func
 inputs:
 - {name: pipeline_config}
 - {name: ssh_key}
+- {name: remote_repos, type: JsonArray}
+- {name: remote_exes, type: JsonArray}
 - {name: remote_files, type: JsonArray}
 - {name: remote_dirs, type: JsonArray}
 - {name: remote_generators, type: JsonArray}
@@ -21,15 +23,23 @@ implementation:
       printf "%s" "$0" > "$program_path"
       python3 -u "$program_path" "$@"
     - "def run_on_cluster_func(pipeline_config,\n                        ssh_key,\n\
+      \                        remote_repos,\n                        remote_exes,\n\
       \                        remote_files,\n                        remote_dirs,\n\
       \                        remote_generators):\n    import paramiko\n    import\
-      \ yaml\n    import os\n\n    class PipelineClient():\n        ssh = paramiko.SSHClient()\n\
-      \        sftp = 0\n\n        def disconnect(self):\n            self.ssh.close()\n\
-      \            self.sftp.close()\n\n        def run_cmd_remotely(self,command):\n\
-      \            print(\"[Remote] >>> \", command)\n            (stdin, stdout,\
-      \ stderr) = self.ssh.exec_command(command,get_pty=True)\n            for line\
-      \ in stdout.readlines():\n                print(line)\n            err = stderr.read().decode()\n\
-      \            if err:\n                print(err)\n\n        def is_dir_path_existed_remotely(self,file_path):\n\
+      \ yaml\n    import os\n\n    def cmd_wget(file_src, dir_dst):\n        return\
+      \ 'wget ' + file_src + ' -P ' + dir_dst\n\n    def cmd_generator(working_dir,\
+      \ generator_script):\n        if '.' in generator_script.split(' ')[0]:\n  \
+      \          gen_ext = generator_script.split(' ')[0].split['.'][1]\n        \
+      \    if gen_ext == 'py':\n                return 'cd ' + working_dir + '; python3\
+      \ ' + generator_script\n        else:#is bash file\n            return 'cd '\
+      \ + working_dir + '; ' + generator_script\n\n    class PipelineClient():\n \
+      \       ssh = paramiko.SSHClient()\n        sftp = 0\n\n        def disconnect(self):\n\
+      \            self.ssh.close()\n            self.sftp.close()\n\n        def\
+      \ run_cmd_remotely(self,command):\n            print(\"[Remote] >>> \", command)\n\
+      \            (stdin, stdout, stderr) = self.ssh.exec_command(command,get_pty=True)\n\
+      \            for line in stdout.readlines():\n                print(line)\n\
+      \            err = stderr.read().decode()\n            if err:\n           \
+      \     print(err)\n\n        def is_dir_path_existed_remotely(self,file_path):\n\
       \            try:\n                self.sftp.chdir(file_path) # sub-directory\
       \ exists\n                print(file_path + ' exists')\n                return\
       \ True\n            except IOError:\n                print(file_path + ' does\
@@ -64,21 +74,33 @@ implementation:
       \ = params['ssh']['address']\n    cluster_username = params['ssh']['username']\n\
       \    cluster_home_path = \"/storage/home/\" + cluster_username[0] + \"/\" +\
       \ cluster_username\n    print('Cluster SSH info: ' + cluster_username + '@'\
-      \ + cluster_address)\n\n    for dirs in remote_dirs:\n        print('mkdir_nest\
-      \ ' + dirs)\n\n    for files in remote_files:\n        for working_path in files.keys():\n\
-      \            print('wget ' + files[working_path] + ' -P ' + working_path)\n\n\
-      \    for generators in remote_generators:\n        for working_path in generators.keys():\n\
+      \ + cluster_address)\n\n    for files in remote_repos:\n        for working_path\
+      \ in files.keys():\n            print('git clone ' + files[working_path] + '\
+      \ ' + working_path)\n\n    for files in remote_exes:\n        for working_path\
+      \ in files.keys():\n            print('cd ' + working_path + ' ./' + files[working_path])\n\
+      \n    for dirs in remote_dirs:\n        print('mkdir_nest ' + dirs)\n\n    for\
+      \ files in remote_files:\n        for working_path in files.keys():\n      \
+      \      print('wget ' + files[working_path] + ' -P ' + working_path)\n\n    for\
+      \ generators in remote_generators:\n        for working_path in generators.keys():\n\
       \            print('cd ' + working_path + ' ' + generators[working_path])\n\n\
-      \    # '''Connect to server '''\n    # client = PipelineClient()\n    # ssh,\
-      \ sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)\n\
-      \    # client.run_cmd_remotely('ls -l')\n\n    # for file_path in cluster_mkdir_path:\n\
-      \    #     client.mkdir_nested(file_path)\n    #     print('Created cluster\
-      \ path: ' + file_path)\n\nimport json\nimport argparse\n_parser = argparse.ArgumentParser(prog='Run\
+      \    # #Connect to server\n    # client = PipelineClient()\n    # ssh, sftp\
+      \ = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)\n\
+      \    # client.run_cmd_remotely('ls -l')\n\n    # #Pull repo \n\n    # #Create\
+      \ dirs\n    # for file_path in remote_dirs:\n    #     client.mkdir_nested(file_path)\n\
+      \    #     print('Created cluster path: ' + file_path)\n\n    # #Copy files\n\
+      \    # for files in remote_files:\n    #     for working_path in files.keys():\n\
+      \    #         client.run_cmd_remotely(cmd_wget(files[working_path], working_path))\n\
+      \n    # #Run generators    \n    # for generators in remote_generators:\n  \
+      \  #     for working_path in generators.keys():\n    #         client.run_cmd_remotely(cmd_generator(working_path,generators[working_path]))\n\
+      \nimport json\nimport argparse\n_parser = argparse.ArgumentParser(prog='Run\
       \ on cluster func', description='')\n_parser.add_argument(\"--pipeline-config\"\
       , dest=\"pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n\
       _parser.add_argument(\"--ssh-key\", dest=\"ssh_key\", type=str, required=True,\
-      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-files\", dest=\"\
-      remote_files\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-repos\", dest=\"\
+      remote_repos\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-exes\", dest=\"remote_exes\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-files\"\
+      , dest=\"remote_files\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
       _parser.add_argument(\"--remote-dirs\", dest=\"remote_dirs\", type=json.loads,\
       \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-generators\"\
       , dest=\"remote_generators\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
@@ -88,6 +110,10 @@ implementation:
     - {inputPath: pipeline_config}
     - --ssh-key
     - {inputPath: ssh_key}
+    - --remote-repos
+    - {inputValue: remote_repos}
+    - --remote-exes
+    - {inputValue: remote_exes}
     - --remote-files
     - {inputValue: remote_files}
     - --remote-dirs

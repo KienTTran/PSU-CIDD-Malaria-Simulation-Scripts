@@ -3,14 +3,16 @@ ssh:
     username: &username ktt5121
 
 project:
-    folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
-    exe: build/bin/MaSim
-    repo:
-        url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
-        branch: dev
+    - Github2/PSU-CIDD-Malaria-Simulation-Test2:
+        exe:
+            path: build/bin/MaSim
+            parameters:
+            - '-r ValidationReporter'
+        repo:
+            url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
+            branch: dev
          
 remote:
-    files:
     - work/Pipeline_1/output
     - work/Pipeline_1/raw
     - work/Pipeline_1/bin:

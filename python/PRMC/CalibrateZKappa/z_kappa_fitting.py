@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-exp_number = '18'
+exp_number = '18_3'
 
 local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -88,7 +88,7 @@ rmsq_df = rmsq_df.pivot("z", "kappa", "rmsq_error")
 plot = sns.heatmap(rmsq_df, cmap="rocket_r", cbar_kws={'label': '2*ln_rmse'})
 
 figure = plot.get_figure()   
-figure.savefig("heatmap_mosquito_2.png", dpi=300)
+figure.savefig(local_path+"heatmap_mosquito.png", dpi=300)
 
 #%%
 
@@ -128,4 +128,4 @@ for i_z, z in enumerate(data.z.unique()[range(0,z_len, math.floor(z_len/nr))]):
         axes[i_z,i_kappa].set_ylabel("z=%.2f"%(z))
         axes[i_z,i_kappa].set_xlabel("k=%.2f"%(kappa))
 
-fig.savefig("curve_fit_mosquito_2.png", dpi=300)
+fig.savefig(local_path+"curve_fit_mosquito.png", dpi=300)
