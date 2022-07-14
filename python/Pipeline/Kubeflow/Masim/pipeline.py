@@ -52,21 +52,28 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
             script_with_parameters = ''
             if gen_value != None:
                 for value in gen_value:
-                    if value['script'] != None:
-                        script_name = value['script']['name']
-                        if script_name != None:
-                            script_parameters = value['script']['parameters']
-                            parameter_str = ''
-                            if script_parameters != None:
-                                for parameter in script_parameters:
-                                    parameter_str += ' ' + parameter
-                            script_with_parameters = script_name + parameter_str
-                            print(os.path.join(cluster_home_path,working_path),script_with_parameters)
-                            cluster_generators.append((os.path.join(cluster_home_path,working_path),script_with_parameters))
-                        else:
-                            print('Script name is empty')
-                    else:
-                        print('Script is empty')
+                    for v_key in value.keys():
+                        if v_key =='bash':
+                            bash_str = ''
+                            if value[v_key] != None:
+                                bash_str = value[v_key]
+                                cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})
+                        elif v_key == 'script':
+                            if value[v_key] != None:
+                                script_name = value[v_key]['name']
+                                if script_name != None:
+                                    script_parameters = value[v_key]['parameters']
+                                    parameter_str = ''
+                                    if script_parameters != None:
+                                        for parameter in script_parameters:
+                                            parameter_str += ' ' + parameter
+                                    script_with_parameters = script_name + parameter_str
+                                    print(os.path.join(cluster_home_path,working_path),script_with_parameters)
+                                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
+                                else:
+                                    print('Script name is empty')
+                            else:
+                                print('Script is empty')
             else:
                 print('Missing script when path is available')
                  
@@ -81,7 +88,7 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
         
     for generators in cluster_generators:
         for working_path in generators.keys():
-            print('cd ' + working_path + '; python3 ' + generators[working_path])
+            print('cd ' + working_path + ' ' + generators[working_path])
                 
     return remote_output(cluster_files,cluster_dirs,cluster_generators)
     
@@ -172,27 +179,25 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     with open(pipeline_config,'r') as file:
         params =  yaml.full_load(file)
     
-    client = PipelineClient()
-    
     #ssh info
     cluster_address = params['ssh']['address']
     cluster_username = params['ssh']['username']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
         
+    for dirs in remote_dirs:
+        print('mkdir_nest ' + dirs)
+        
     for files in remote_files:
         for working_path in files.keys():
             print('wget ' + files[working_path] + ' -P ' + working_path)
-            
-    for dirs in remote_dirs:
-        for working_path in dirs.keys():
-            print('mkdir_nest ' + dirs[working_path] + ' -P ' + working_path)
     
     for generators in remote_generators:
         for working_path in generators.keys():
-            print('cd ' + working_path + '; python3 ' + generators[working_path])
+            print('cd ' + working_path + ' ' + generators[working_path])
             
     # '''Connect to server '''
+    # client = PipelineClient()
     # ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
     # client.run_cmd_remotely('ls -l')
     
@@ -283,7 +288,7 @@ with open('pipeline.yml','r') as file:
     
 cluster_username = params['ssh']['username']
 cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-cluster_generator = []
+cluster_generators = []
 for gen_pair in params['generator']:
     for gen_key in gen_pair.keys():
         working_path = gen_key
@@ -291,23 +296,34 @@ for gen_pair in params['generator']:
         script_with_parameters = ''
         if gen_value != None:
             for value in gen_value:
-                if value['script'] != None:
-                    script_name = value['script']['name']
-                    if script_name != None:
-                        script_parameters = value['script']['parameters']
-                        parameter_str = ''
-                        if script_parameters != None:
-                            for parameter in script_parameters:
-                                parameter_str += ' ' + parameter
-                        script_with_parameters = script_name + parameter_str
-                        print(os.path.join(cluster_home_path,working_path),script_with_parameters)
-                        cluster_generator.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
-                    else:
-                        print('Script name is empty')
-                else:
-                    print('Script is empty')
+                for v_key in value.keys():
+                    if v_key =='bash':
+                        bash_str = ''
+                        if value[v_key] != None:
+                            bash_str = value[v_key]
+                            cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})
+                    elif v_key == 'script':
+                        if value[v_key] != None:
+                            script_name = value[v_key]['name']
+                            if script_name != None:
+                                script_parameters = value[v_key]['parameters']
+                                parameter_str = ''
+                                if script_parameters != None:
+                                    for parameter in script_parameters:
+                                        parameter_str += ' ' + parameter
+                                script_with_parameters = script_name + parameter_str
+                                print(os.path.join(cluster_home_path,working_path),script_with_parameters)
+                                cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
+                            else:
+                                print('Script name is empty')
+                        else:
+                            print('Script is empty')
         else:
             print('Missing script when path is available')
+            
+for generators in cluster_generators:
+    for working_path in generators.keys():
+        print('cd ' + working_path + '; python3 ' + generators[working_path])
         
             
                 

@@ -42,6 +42,7 @@ generator:
             - Pipeline_1
             - job_template.template
             - submit_all_jobs.template
+        - bash: 'ls -l'
     
         
         

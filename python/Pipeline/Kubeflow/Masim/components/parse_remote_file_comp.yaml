@@ -36,26 +36,33 @@ implementation:
       \      for gen_key in gen_pair.keys():\n            working_path = gen_key\n\
       \            gen_value = gen_pair[gen_key]\n            script_with_parameters\
       \ = ''\n            if gen_value != None:\n                for value in gen_value:\n\
-      \                    if value['script'] != None:\n                        script_name\
-      \ = value['script']['name']\n                        if script_name != None:\n\
-      \                            script_parameters = value['script']['parameters']\n\
-      \                            parameter_str = ''\n                          \
-      \  if script_parameters != None:\n                                for parameter\
-      \ in script_parameters:\n                                    parameter_str +=\
-      \ ' ' + parameter\n                            script_with_parameters = script_name\
-      \ + parameter_str\n                            print(os.path.join(cluster_home_path,working_path),script_with_parameters)\n\
-      \                            cluster_generators.append((os.path.join(cluster_home_path,working_path),script_with_parameters))\n\
-      \                        else:\n                            print('Script name\
-      \ is empty')\n                    else:\n                        print('Script\
-      \ is empty')\n            else:\n                print('Missing script when\
-      \ path is available')\n\n    remote_output = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators'])\
+      \                    for v_key in value.keys():\n                        if\
+      \ v_key =='bash':\n                            bash_str = ''\n             \
+      \               if value[v_key] != None:\n                                bash_str\
+      \ = value[v_key]\n                                cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})\n\
+      \                        elif v_key == 'script':\n                         \
+      \   if value[v_key] != None:\n                                script_name =\
+      \ value[v_key]['name']\n                                if script_name != None:\n\
+      \                                    script_parameters = value[v_key]['parameters']\n\
+      \                                    parameter_str = ''\n                  \
+      \                  if script_parameters != None:\n                         \
+      \               for parameter in script_parameters:\n                      \
+      \                      parameter_str += ' ' + parameter\n                  \
+      \                  script_with_parameters = script_name + parameter_str\n  \
+      \                                  print(os.path.join(cluster_home_path,working_path),script_with_parameters)\n\
+      \                                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})\n\
+      \                                else:\n                                   \
+      \ print('Script name is empty')\n                            else:\n       \
+      \                         print('Script is empty')\n            else:\n    \
+      \            print('Missing script when path is available')\n\n    remote_output\
+      \ = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators'])\
       \ \n\n    for file_path in cluster_files:\n        for key in file_path.keys():\n\
       \            print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])\n\
       \n    for file_path in cluster_dirs:\n        print('Cluster file path (create):\
       \ ' + file_path)\n\n    for generators in cluster_generators:\n        for working_path\
-      \ in generators.keys():\n            print('cd ' + working_path + '; python3\
-      \ ' + generators[working_path])\n\n    return remote_output(cluster_files,cluster_dirs,cluster_generators)\n\
-      \ndef _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
+      \ in generators.keys():\n            print('cd ' + working_path + ' ' + generators[working_path])\n\
+      \n    return remote_output(cluster_files,cluster_dirs,cluster_generators)\n\n\
+      def _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
       \ obj\n    import json\n\n    def default_serializer(obj):\n        if hasattr(obj,\
       \ 'to_struct'):\n            return obj.to_struct()\n        else:\n       \
       \     raise TypeError(\n                \"Object of type '%s' is not JSON serializable\
