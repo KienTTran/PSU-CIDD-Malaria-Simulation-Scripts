@@ -1,4 +1,3 @@
-from kfp import dsl, compiler
 import kfp.components as comp
 import kfp
 from typing import NamedTuple
@@ -12,8 +11,86 @@ download_op = kfp.components.load_component_from_url(
 pipeline_config_url = \
 'https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/pipeline.yml'
 
+ssh_key_url = \
+''
+
+def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTuple('outputs', [
+                                                                                ('remote_files', list),
+                                                                                ('remote_dirs', list),
+                                                                                ('remote_generators', list)]):
+    import yaml
+    import os
+    from collections import namedtuple
+    
+    params = 0
+    print("Reading " + pipeline_config)
+    with open(pipeline_config,'r') as file:
+        params =  yaml.full_load(file)
+            
+    cluster_username = params['ssh']['username']
+    cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+    
+    cluster_files = []
+    cluster_dirs = []
+    for pair in params['remote']['files']:
+        if type(pair) == str:
+            cluster_dirs.append(os.path.join(cluster_home_path,pair))
+        else:
+            for key in pair.keys():
+                path = key
+                src_files = pair[key]
+                cluster_dirs.append(os.path.join(cluster_home_path,path))
+                for src_file in src_files:
+                    cluster_files.append({os.path.join(cluster_home_path,path) : src_file})
+                    print(src_file + ' --> ' + os.path.join(cluster_home_path,path))
+                        
+    cluster_generators = []
+    for gen_pair in params['generator']:
+        for gen_key in gen_pair.keys():
+            working_path = gen_key
+            gen_value = gen_pair[gen_key]
+            script_with_parameters = ''
+            if gen_value != None:
+                for value in gen_value:
+                    if value['script'] != None:
+                        script_name = value['script']['name']
+                        if script_name != None:
+                            script_parameters = value['script']['parameters']
+                            parameter_str = ''
+                            if script_parameters != None:
+                                for parameter in script_parameters:
+                                    parameter_str += ' ' + parameter
+                            script_with_parameters = script_name + parameter_str
+                            print(os.path.join(cluster_home_path,working_path),script_with_parameters)
+                            cluster_generators.append((os.path.join(cluster_home_path,working_path),script_with_parameters))
+                        else:
+                            print('Script name is empty')
+                    else:
+                        print('Script is empty')
+            else:
+                print('Missing script when path is available')
+                 
+    remote_output = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators']) 
+    
+    for file_path in cluster_files:
+        for key in file_path.keys():
+            print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])
+            
+    for file_path in cluster_dirs:
+        print('Cluster file path (create): ' + file_path)
+        
+    for generators in cluster_generators:
+        for working_path in generators.keys():
+            print('cd ' + working_path + '; python3 ' + generators[working_path])
+                
+    return remote_output(cluster_files,cluster_dirs,cluster_generators)
+    
+
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
-                        ssh_key: comp.InputArtifact()):
+                        ssh_key: comp.InputArtifact(),
+                        remote_files: list,
+                        remote_dirs: list,
+                        remote_generators: list):
     import paramiko
     import yaml
     import os
@@ -100,118 +177,56 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     #ssh info
     cluster_address = params['ssh']['address']
     cluster_username = params['ssh']['username']
-    cluster_key = params['ssh']['key']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
-    
-    '''Connect to server '''
-    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'], cluster_key)
-    client.run_cmd_remotely('ls -l')  
-    
-    
-def generate_build_script_func(pipeline_config: comp.InputArtifact(),
-                              generate_template: comp.InputArtifact(),
-                              generated_script_path: comp.OutputPath()):    
-    import yaml
-    
-    def generate_build_script(template_file, 
-                              username, 
-                              sh_script_path):       
-        f = open(template_file,'r')
-        temp = f.read()
-        f.close()
-        build_sh_file_data = temp.replace("#username#",username)
-        print('Writing build script username: ' + str(username))
-        f = open(sh_script_path,'w')
-        f.write(build_sh_file_data)
-        f.close()
-
-    params = 0
-    print("Reading " + pipeline_config)
-    with open(pipeline_config,'r') as file:
-        params =  yaml.full_load(file)
-            
-    #Script info
-    generate_build_script(generate_template, params['ssh']['username'], generated_script_path)
-
-def upload_generator_func(pipeline_config: comp.InputArtifact()):
-    import yaml
-    import os
-    
-    params = 0
-    print("Reading " + pipeline_config)
-    with open(pipeline_config,'r') as file:
-        params =  yaml.full_load(file)
         
-    generator_build_parameters = params['generator']['build']['parameters']
-    generator_build_parameter_str = ''
-    if generator_build_parameters != None:
-        for parameter in generator_build_parameters:
-            generator_build_parameter_str += ' ' + str(generator_build_parameters)
-                
-    generator_config_parameters = params['generator']['config']['parameters']
-    generator_config_parameter_str = ''
-    if generator_config_parameters != None:
-        for parameter in generator_config_parameters:
-            generator_config_parameter_str += ' ' + str(parameter)
+    for files in remote_files:
+        for working_path in files.keys():
+            print('wget ' + files[working_path] + ' -P ' + working_path)
+            
+    for dirs in remote_dirs:
+        for working_path in dirs.keys():
+            print('mkdir_nest ' + dirs[working_path] + ' -P ' + working_path)
     
-    cluster_username = params['ssh']['username']
-    cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
-    upload_file_pairs = params['remote']['files']
+    for generators in remote_generators:
+        for working_path in generators.keys():
+            print('cd ' + working_path + '; python3 ' + generators[working_path])
+            
+    # '''Connect to server '''
+    # ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
+    # client.run_cmd_remotely('ls -l')
     
-    cluster_path_src = []
-    cluster_path_dst = []
-    cluster_mkdir_path = []
-    for pair in upload_file_pairs:
-        if type(pair) == str:
-            cluster_mkdir_path.append(os.path.join(cluster_home_path,pair))
-        else:
-            for key in pair.keys():
-                path = key
-                src_files = pair[key]
-                cluster_mkdir_path.append(os.path.join(cluster_home_path,path))
-                for src_file in src_files:
-                    cluster_file_dst_path = os.path.join(cluster_home_path,path)
-                    cluster_path_dst.append(cluster_file_dst_path)
-                    cluster_path_src.append(src_file)
-                    print(src_file + ' --> ' + cluster_file_dst_path)
-                    
-    for file_path in cluster_path_src:
-        print('Cluster file path (transfer from): ' + file_path)                    
-    for file_path in cluster_path_dst:
-        print('Cluster file path (transfer to): ' + file_path)
-    for file_path in cluster_mkdir_path:
-        print('Cluster file path (create): ' + file_path)
+    # for file_path in cluster_mkdir_path:
+    #     client.mkdir_nested(file_path)
+    #     print('Created cluster path: ' + file_path)
+    
     
 def pipeline():        
     pipeline_config_download_task = download_op(url = pipeline_config_url)
     pipeline_config_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
+    ssh_key_download_task = download_op(url = ssh_key_url)
+    ssh_key_download_task.execution_options.caching_strategy.max_cache_staleness = "P0D"
     
-    upload_generator_op = comp.create_component_from_func(
-            func = upload_generator_func,
-            output_component_file='components/upload_config_generator_comp.yaml',
+    parse_pipeline_config_op = comp.create_component_from_func(
+            func = parse_pipeline_config_func,
+            output_component_file='components/parse_remote_file_comp.yaml',
             base_image='python:3.8',
             packages_to_install=['pyaml'])
     
-    upload_generator_task = upload_generator_op(pipeline_config = pipeline_config_download_task.outputs['data'])
+    parse_pipeline_config_task = parse_pipeline_config_op(pipeline_config = pipeline_config_download_task.outputs['data'])
     
-    # generate_build_script_op = comp.create_component_from_func(
-    #         func = generate_build_script_func,
-    #         output_component_file='components/generate_script_comp.yaml',
-    #         base_image='python:3.8',
-    #         packages_to_install=['pyaml'])
+    run_on_cluster_op = comp.create_component_from_func(
+            func = run_on_cluster_func,
+            output_component_file='components/run_on_cluster_comp.yaml', # This is optional. It saves the component spec for future use.
+            base_image='python:3.8',
+            packages_to_install=['paramiko','pyaml'])
     
-    # generate_build_script_task = generate_build_script_op(pipeline_config = pipeline_config_download_task.outputs['data'],
-    #                                                       generate_template = build_generate_template_download_task.outputs['data'])
-    
-    # run_on_cluster_op = comp.create_component_from_func(
-    #         func = run_on_cluster_func,
-    #         output_component_file='components/run_on_cluster_comp.yaml', # This is optional. It saves the component spec for future use.
-    #         base_image='python:3.8',
-    #         packages_to_install=['paramiko','pyaml'])
-    
-    # run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
-    #                                         ssh_key = ssh_key_download_task.outputs['data'])
+    run_on_cluster_task = run_on_cluster_op(pipeline_config = pipeline_config_download_task.outputs['data'],
+                                            ssh_key = ssh_key_download_task.outputs['data'],
+                                            remote_files = parse_pipeline_config_task.outputs['remote_files'],
+                                            remote_dirs = parse_pipeline_config_task.outputs['remote_dirs'],
+                                            remote_generators = parse_pipeline_config_task.outputs['remote_generators'],
+                                            )
     
 
 #%%
@@ -221,3 +236,81 @@ client.create_run_from_pipeline_func(pipeline, arguments={})
 if __name__ == '__main__':
     # Compiling the pipeline
     kfp.compiler.Compiler().compile(pipeline, __file__ + '.yaml')
+    
+#%%
+import yaml
+import os
+from collections import namedtuple
+
+params = 0
+print("Reading " + 'pipeline.yml')
+with open('pipeline.yml','r') as file:
+    params =  yaml.full_load(file)
+        
+cluster_username = params['ssh']['username']
+cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+upload_file_pairs = params['remote']['files']
+
+cluster_files = []
+cluster_mkdir = []
+for pair in upload_file_pairs:
+    if type(pair) == str:
+        cluster_mkdir.append(os.path.join(cluster_home_path,pair))
+    else:
+        for key in pair.keys():
+            path = key
+            src_files = pair[key]
+            cluster_mkdir.append(os.path.join(cluster_home_path,path))
+            for src_file in src_files:
+                cluster_files.append({os.path.join(cluster_home_path,path) : src_file})
+                print(src_file + ' --> ' + os.path.join(cluster_home_path,path))
+             
+remote_path_output = namedtuple('outputs', ['remote_files']) 
+for file_path in cluster_files:
+    for key in file_path.keys():
+        print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])   
+for file_path in cluster_mkdir:
+    print('Cluster file path (create): ' + file_path)
+    
+#%%
+import yaml
+import os
+
+params = 0    
+print("Reading " + 'pipeline.yml')
+with open('pipeline.yml','r') as file:
+    params =  yaml.full_load(file)
+    
+cluster_username = params['ssh']['username']
+cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+cluster_generator = []
+for gen_pair in params['generator']:
+    for gen_key in gen_pair.keys():
+        working_path = gen_key
+        gen_value = gen_pair[gen_key]
+        script_with_parameters = ''
+        if gen_value != None:
+            for value in gen_value:
+                if value['script'] != None:
+                    script_name = value['script']['name']
+                    if script_name != None:
+                        script_parameters = value['script']['parameters']
+                        parameter_str = ''
+                        if script_parameters != None:
+                            for parameter in script_parameters:
+                                parameter_str += ' ' + parameter
+                        script_with_parameters = script_name + parameter_str
+                        print(os.path.join(cluster_home_path,working_path),script_with_parameters)
+                        cluster_generator.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
+                    else:
+                        print('Script name is empty')
+                else:
+                    print('Script is empty')
+        else:
+            print('Missing script when path is available')
+        
+            
+                
+            
+            
+            

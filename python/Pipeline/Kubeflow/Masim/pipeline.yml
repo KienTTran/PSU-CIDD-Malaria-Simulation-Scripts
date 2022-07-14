@@ -1,7 +1,6 @@
 ssh:
     address: submit.aci.ics.psu.edu
     username: &username ktt5121
-    key: 0
 
 project:
     folder: Github2/PSU-CIDD-Malaria-Simulation-Test2
@@ -25,22 +24,24 @@ remote:
         - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/build.template
         
 generator:
-    build:
-        script: generate_build_script.py
-        parameters:
-        - build.template
-        - *username
-        - build.sh
-    config:
-        script: generate_configs.py
-        parameters:
-        - generated_configs
-        - parameters.yml
-        - input.yml
-        - *username
-        - Pipeline_1
-        - job_template.template
-        - submit_all_jobs.template
+    - work/Pipeline_1/build:
+        - script:
+            name: generate_build_script.py
+            parameters:
+            - build.template
+            - *username
+            - build.sh
+    - work/Pipeline_1/bin:
+        - script:
+            name: generate_configs.py
+            parameters:
+            - generated_configs
+            - parameters.yml
+            - input.yml
+            - *username
+            - Pipeline_1
+            - job_template.template
+            - submit_all_jobs.template
     
         
         

@@ -42,6 +42,10 @@ client = kfp.Client(host='http://172.28.86.153:31492/')
 print(client.list_experiments())
 
 @comp.func_to_container_op
+def produce_one_small_output() -> str:
+    return 'Hello world'
+
+@comp.func_to_container_op
 def produce_two_small_outputs() -> NamedTuple('Outputs', [('text', str), ('number', int)]):
     return ("data 1", 42)
 

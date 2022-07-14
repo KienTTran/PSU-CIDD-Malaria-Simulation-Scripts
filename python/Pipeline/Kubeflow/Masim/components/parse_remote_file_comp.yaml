@@ -1,0 +1,80 @@
+name: Parse pipeline config func
+inputs:
+- {name: pipeline_config}
+outputs:
+- {name: remote_files, type: JsonArray}
+- {name: remote_dirs, type: JsonArray}
+- {name: remote_generators, type: JsonArray}
+implementation:
+  container:
+    image: python:3.8
+    command:
+    - sh
+    - -c
+    - (PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
+      'pyaml' || PIP_DISABLE_PIP_VERSION_CHECK=1 python3 -m pip install --quiet --no-warn-script-location
+      'pyaml' --user) && "$0" "$@"
+    - sh
+    - -ec
+    - |
+      program_path=$(mktemp)
+      printf "%s" "$0" > "$program_path"
+      python3 -u "$program_path" "$@"
+    - "def parse_pipeline_config_func(pipeline_config):\n    import yaml\n    import\
+      \ os\n    from collections import namedtuple\n\n    params = 0\n    print(\"\
+      Reading \" + pipeline_config)\n    with open(pipeline_config,'r') as file:\n\
+      \        params =  yaml.full_load(file)\n\n    cluster_username = params['ssh']['username']\n\
+      \    cluster_home_path = \"/storage/home/\" + cluster_username[0] + \"/\" +\
+      \ cluster_username\n\n    cluster_files = []\n    cluster_dirs = []\n    for\
+      \ pair in params['remote']['files']:\n        if type(pair) == str:\n      \
+      \      cluster_dirs.append(os.path.join(cluster_home_path,pair))\n        else:\n\
+      \            for key in pair.keys():\n                path = key\n         \
+      \       src_files = pair[key]\n                cluster_dirs.append(os.path.join(cluster_home_path,path))\n\
+      \                for src_file in src_files:\n                    cluster_files.append({os.path.join(cluster_home_path,path)\
+      \ : src_file})\n                    print(src_file + ' --> ' + os.path.join(cluster_home_path,path))\n\
+      \n    cluster_generators = []\n    for gen_pair in params['generator']:\n  \
+      \      for gen_key in gen_pair.keys():\n            working_path = gen_key\n\
+      \            gen_value = gen_pair[gen_key]\n            script_with_parameters\
+      \ = ''\n            if gen_value != None:\n                for value in gen_value:\n\
+      \                    if value['script'] != None:\n                        script_name\
+      \ = value['script']['name']\n                        if script_name != None:\n\
+      \                            script_parameters = value['script']['parameters']\n\
+      \                            parameter_str = ''\n                          \
+      \  if script_parameters != None:\n                                for parameter\
+      \ in script_parameters:\n                                    parameter_str +=\
+      \ ' ' + parameter\n                            script_with_parameters = script_name\
+      \ + parameter_str\n                            print(os.path.join(cluster_home_path,working_path),script_with_parameters)\n\
+      \                            cluster_generators.append((os.path.join(cluster_home_path,working_path),script_with_parameters))\n\
+      \                        else:\n                            print('Script name\
+      \ is empty')\n                    else:\n                        print('Script\
+      \ is empty')\n            else:\n                print('Missing script when\
+      \ path is available')\n\n    remote_output = namedtuple('outputs', ['remote_files','remote_dirs','remote_generators'])\
+      \ \n\n    for file_path in cluster_files:\n        for key in file_path.keys():\n\
+      \            print('Cluster file path (transfer): ' + key + ' --> ' + file_path[key])\n\
+      \n    for file_path in cluster_dirs:\n        print('Cluster file path (create):\
+      \ ' + file_path)\n\n    for generators in cluster_generators:\n        for working_path\
+      \ in generators.keys():\n            print('cd ' + working_path + '; python3\
+      \ ' + generators[working_path])\n\n    return remote_output(cluster_files,cluster_dirs,cluster_generators)\n\
+      \ndef _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
+      \ obj\n    import json\n\n    def default_serializer(obj):\n        if hasattr(obj,\
+      \ 'to_struct'):\n            return obj.to_struct()\n        else:\n       \
+      \     raise TypeError(\n                \"Object of type '%s' is not JSON serializable\
+      \ and does not have .to_struct() method.\"\n                % obj.__class__.__name__)\n\
+      \n    return json.dumps(obj, default=default_serializer, sort_keys=True)\n\n\
+      import argparse\n_parser = argparse.ArgumentParser(prog='Parse pipeline config\
+      \ func', description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"\
+      pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      ----output-paths\", dest=\"_output_paths\", type=str, nargs=3)\n_parsed_args\
+      \ = vars(_parser.parse_args())\n_output_files = _parsed_args.pop(\"_output_paths\"\
+      , [])\n\n_outputs = parse_pipeline_config_func(**_parsed_args)\n\n_output_serializers\
+      \ = [\n    _serialize_json,\n    _serialize_json,\n    _serialize_json,\n\n\
+      ]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n    try:\n\
+      \        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n  \
+      \      pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
+    args:
+    - --pipeline-config
+    - {inputPath: pipeline_config}
+    - '----output-paths'
+    - {outputPath: remote_files}
+    - {outputPath: remote_dirs}
+    - {outputPath: remote_generators}
