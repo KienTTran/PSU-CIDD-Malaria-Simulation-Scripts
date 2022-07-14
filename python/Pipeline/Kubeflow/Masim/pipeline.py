@@ -53,11 +53,13 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
             if gen_value != None:
                 for value in gen_value:
                     for v_key in value.keys():
-                        if v_key =='bash':
+                        if v_key == 'bash':
                             bash_str = ''
                             if value[v_key] != None:
                                 bash_str = value[v_key]
                                 cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})
+                            else:
+                                print('Bash cmd is empty')
                         elif v_key == 'script':
                             if value[v_key] != None:
                                 script_name = value[v_key]['name']

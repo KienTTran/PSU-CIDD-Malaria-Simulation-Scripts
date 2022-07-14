@@ -37,19 +37,20 @@ implementation:
       \            gen_value = gen_pair[gen_key]\n            script_with_parameters\
       \ = ''\n            if gen_value != None:\n                for value in gen_value:\n\
       \                    for v_key in value.keys():\n                        if\
-      \ v_key =='bash':\n                            bash_str = ''\n             \
-      \               if value[v_key] != None:\n                                bash_str\
+      \ v_key == 'bash':\n                            bash_str = ''\n            \
+      \                if value[v_key] != None:\n                                bash_str\
       \ = value[v_key]\n                                cluster_generators.append({os.path.join(cluster_home_path,working_path):bash_str})\n\
-      \                        elif v_key == 'script':\n                         \
-      \   if value[v_key] != None:\n                                script_name =\
-      \ value[v_key]['name']\n                                if script_name != None:\n\
-      \                                    script_parameters = value[v_key]['parameters']\n\
-      \                                    parameter_str = ''\n                  \
-      \                  if script_parameters != None:\n                         \
-      \               for parameter in script_parameters:\n                      \
-      \                      parameter_str += ' ' + parameter\n                  \
-      \                  script_with_parameters = script_name + parameter_str\n  \
-      \                                  print(os.path.join(cluster_home_path,working_path),script_with_parameters)\n\
+      \                            else:\n                                print('Bash\
+      \ cmd is empty')\n                        elif v_key == 'script':\n        \
+      \                    if value[v_key] != None:\n                            \
+      \    script_name = value[v_key]['name']\n                                if\
+      \ script_name != None:\n                                    script_parameters\
+      \ = value[v_key]['parameters']\n                                    parameter_str\
+      \ = ''\n                                    if script_parameters != None:\n\
+      \                                        for parameter in script_parameters:\n\
+      \                                            parameter_str += ' ' + parameter\n\
+      \                                    script_with_parameters = script_name +\
+      \ parameter_str\n                                    print(os.path.join(cluster_home_path,working_path),script_with_parameters)\n\
       \                                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})\n\
       \                                else:\n                                   \
       \ print('Script name is empty')\n                            else:\n       \

@@ -31,6 +31,7 @@ generator:
             - build.template
             - *username
             - build.sh
+        - bash: 'ls -l'
     - work/Pipeline_1/bin:
         - script:
             name: generate_configs.py
@@ -43,6 +44,8 @@ generator:
             - job_template.template
             - submit_all_jobs.template
         - bash: 'ls -l'
+        
+
     
         
         
