@@ -5,10 +5,10 @@ ssh:
 project:
     - &project Github2/PSU-CIDD-Malaria-Simulation-Test2:
         exe:
-            build:
+            build: #relative path of build to project
                 path: build/bin/MaSim
                 parameters:
-            run: 
+            run: #Full absolute path of run
                 path: work/Pipeline_1/bin/MaSim
                 parameters:
                 - '-r ValidationReporter'

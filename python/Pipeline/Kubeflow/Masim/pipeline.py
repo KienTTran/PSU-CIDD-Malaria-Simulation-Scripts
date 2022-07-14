@@ -25,7 +25,7 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     import os
     from collections import namedtuple
     
-    print('parsing pipeline')
+    print('Parsing pipeline')
     
     params = 0
     print("Reading " + pipeline_config)
@@ -179,12 +179,12 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     #Build       
     for file_path in cluster_exe_build:
         for key in file_path.keys():
-            print('Cluster exe (build): ' + key + ' --> ' + file_path[key]) 
+            print('Cluster exe (build): ' + key + ' ' + file_path[key]) 
             
     #Run       
     for file_path in cluster_exe_run:
         for key in file_path.keys():
-            print('Cluster exe (run): ' + key + ' --> ' + file_path[key])          
+            print('Cluster exe (run): ' + key + ' ./' + file_path[key])          
     
     #Files
     for file_path in cluster_files:
@@ -214,22 +214,21 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     import paramiko
     import yaml
     import os
+    import time
     
     print('Running on cluster')
     
+    def cmd_cp(src, dst):
+        return 'cp ' + src + ' ' + dst
+    
     def cmd_git_clone(repo_info, dir_dst):
-        return 'git clone' + repo_info + ' ' + dir_dst
+        return 'git clone ' + repo_info + ' ' + dir_dst
     
     def cmd_wget(file_src, dir_dst):
         return 'wget ' + file_src + ' -P ' + dir_dst
     
     def cmd_generator(working_dir, generator_script):
-        if '.' in generator_script.split(' ')[0]:
-            gen_ext = generator_script.split(' ')[0].split['.'][1]
-            if gen_ext == 'py':
-                return 'cd ' + working_dir + '; python3 ' + generator_script
-        else:#is bash file
-            return 'cd ' + working_dir + '; ' + generator_script
+        return 'cd ' + working_dir + ' && ' + generator_script
     
     class PipelineClient():
         ssh = paramiko.SSHClient()
@@ -249,22 +248,24 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                 print(err)
                 
         def is_dir_path_existed_remotely(self,file_path):
+            is_existed = False
             try:
                 self.sftp.chdir(file_path) # sub-directory exists
                 print(file_path + ' exists')
-                return True
+                is_existed = True
             except IOError:
                 print(file_path + ' does not exist')
-                return False
+            return is_existed
             
         def is_file_path_existed_remotely(self,file_path):
+            is_existed = False
             try:
                 self.sftp.stat(file_path) # sub-directory exists
                 print(file_path + ' exists')
-                return True
+                is_existed = True
             except IOError:
                 print(file_path + ' does not exist')
-                return False
+            return is_existed
                 
         def mkdir_nested_remotely(self, remote_directory):
             """Change to this directory, recursively making new folders if needed.
@@ -280,7 +281,7 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                 self.sftp.chdir(remote_directory) # sub-directory exists
             except IOError:
                 dirname, basename = os.path.split(remote_directory.rstrip('/'))
-                self.mkdir_nested(dirname) # make parent directories
+                self.mkdir_nested_remotely(dirname) # make parent directories
                 self.sftp.mkdir(basename) # sub-directory missing, so created it
                 self.sftp.chdir(basename)
                 return True
@@ -313,8 +314,7 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     cluster_username = params['ssh']['username']
     cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
     print('Cluster SSH info: ' + cluster_username + '@' + cluster_address)
-        
-    
+            
     for repo in remote_repo:
         for working_path in repo.keys():
             print('git clone ' + repo[working_path] + ' ' + working_path)
@@ -338,30 +338,53 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
         for working_path in generators.keys():
             print('cd ' + working_path + ' ' + generators[working_path])
             
-    # #Connect to server
-    # client = PipelineClient()
-    # ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
-    # client.run_cmd_remotely('ls -l')    
+    #Connect to server
+    client = PipelineClient()
+    ssh, sftp = client.connect(params['ssh']['address'], params['ssh']['username'],ssh_key)
+    client.run_cmd_remotely('ls -l')    
     
-    # #Pull repo
-    # for repos in remote_repos:
-    #     for working_path in repos.keys():
-    #         client.run_cmd_remotely(cmd_git_clone(repos[working_path],working_path))
+    #Pull repo
+    for repo in remote_repo:
+        for working_path in repo.keys():
+            client.run_cmd_remotely(cmd_git_clone(repo[working_path],working_path))
     
-    # #Create dirs
-    # for file_path in remote_dirs:
-    #     client.mkdir_nested(file_path)
-    #     print('Created cluster path: ' + file_path)
+    #Create dirs
+    for file_path in remote_dirs:
+        client.mkdir_nested_remotely(file_path)
+        print('Created cluster path: ' + file_path)
         
-    # #Copy files
-    # for files in remote_files:
-    #     for working_path in files.keys():
-    #         client.run_cmd_remotely(cmd_wget(files[working_path], working_path))
+    #Copy files
+    for files in remote_files:
+        for working_path in files.keys():
+            client.run_cmd_remotely(cmd_wget(files[working_path], working_path))
             
-    # #Run generators    
-    # for generators in remote_generators:
-    #     for working_path in generators.keys():
-    #         client.run_cmd_remotely(cmd_generator(working_path,generators[working_path]))
+    #Run generators    
+    generator_cmd = ''
+    for generators in remote_generators:
+        for working_path in generators.keys():
+            if generator_cmd == '':
+                generator_cmd = cmd_generator(working_path,generators[working_path])
+            else:
+                generator_cmd = generator_cmd + ' && ' + cmd_generator(working_path,generators[working_path])            
+    client.run_cmd_remotely(generator_cmd)
+            
+    #Preparing for run
+    exe_path_src = ''
+    exe_path_dst = ''
+    for build,run in zip(remote_exe_build, remote_exe_run):
+        for key in build.keys():
+            exe_path_src = os.path.join(key,build[key])
+            exe_path_dst = run[key].split(' ')[0]            
+    
+    # while not client.is_file_path_existed_remotely(exe_path_src):
+    #     print('Still building, wait for 10s')
+    #     time.sleep(10)
+    
+    if client.is_file_path_existed_remotely(exe_path_src):
+        client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))
+        print('Copy ' + exe_path_src +' --> ' + exe_path_dst)
+    else:
+        print('Built binary is not existed, please check build log and try again')
     
     
 def pipeline():        
@@ -476,6 +499,12 @@ for pair in params['project']:
                                 pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch
                             cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})
                 
+
+for build,run in zip(cluster_exe_build, cluster_exe_run):
+    for key in build.keys():
+        exe_path_src = os.path.join(key,build[key])
+        exe_path_dst = run[key].split(' ')[0]
+        print(exe_path_src,exe_path_dst)
     
 #%%
 import yaml
@@ -516,7 +545,7 @@ import yaml
 import os
 
 def cmd_generator(working_dir, generator_script):
-    return 'cd ' + working_dir + '; ' + generator_script
+    return 'cd ' + working_dir + ' && ' + generator_script
         
 params = 0    
 print("Reading " + 'pipeline.yml')
@@ -581,10 +610,15 @@ for gen_pair in params['generator']:
         else:
             print('Missing script when path is available, skipped')
             
+generator_cmd = ''
 for generators in cluster_generators:
     for working_path in generators.keys():
-        # print('cd ' + working_path + '; python3 ' + generators[working_path])
-        print(cmd_generator(working_path,generators[working_path]))
+        if generator_cmd == '':
+            generator_cmd = cmd_generator(working_path,generators[working_path])
+        else:
+            generator_cmd = generator_cmd + ' && ' + cmd_generator(working_path,generators[working_path])
+            
+print(generator_cmd)
         
             
                 
