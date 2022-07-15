@@ -8,6 +8,7 @@ outputs:
 - {name: remote_files, type: JsonArray}
 - {name: remote_dirs, type: JsonArray}
 - {name: remote_generators, type: JsonArray}
+- {name: remote_schedulers, type: JsonArray}
 implementation:
   container:
     image: python:3.8
@@ -57,18 +58,19 @@ implementation:
       \    parameter_str += ' ' + parameter\n                            except Exception\
       \ as e:\n                                print('Missing ' + str(e) + ', use\
       \ empty parameters')\n                            pj_exe_run_with_parameters\
-      \ = pj_exe_run_path + ' ' + parameter_str\n                            cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})\n\
-      \n                        pj_repo = pair[p_key]['repo']\n                  \
-      \      if pj_repo == None:\n                            print('Repo is empty')\n\
-      \                        else:\n                            pj_repo_url = pair[p_key]['repo']['url']\n\
-      \                            if pj_repo_url == None:\n                     \
-      \           print('Repo URL is empty')\n                            else:\n\
-      \                                pj_repo_branch = pair[p_key]['repo']['branch']\n\
-      \                                pj_repo_git = ''\n                        \
-      \        if pj_repo_branch == None:\n                                    pj_repo_git\
-      \ = pj_repo_url\n                                else:\n                   \
-      \                 pj_repo_git = pj_repo_url + ' -b ' + pj_repo_branch\n    \
-      \                            cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})\n\
+      \ = os.path.join(cluster_home_path,pj_exe_run_path) + ' ' + parameter_str\n\
+      \                            cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})\n\
+      \                        #Repo        \n                        pj_repo = pair[p_key]['repo']\n\
+      \                        if pj_repo == None:\n                            print('Repo\
+      \ is empty')\n                        else:\n                            pj_repo_url\
+      \ = pair[p_key]['repo']['url']\n                            if pj_repo_url ==\
+      \ None:\n                                print('Repo URL is empty')\n      \
+      \                      else:\n                                pj_repo_branch\
+      \ = pair[p_key]['repo']['branch']\n                                pj_repo_git\
+      \ = ''\n                                if pj_repo_branch == None:\n       \
+      \                             pj_repo_git = pj_repo_url\n                  \
+      \              else:\n                                    pj_repo_git = pj_repo_url\
+      \ + ' -b ' + pj_repo_branch\n                                cluster_repo.append({os.path.join(cluster_home_path,pj_path):pj_repo_git})\n\
       \n    #Files\n    cluster_files = []\n    cluster_dirs = []\n    for pair in\
       \ params['remote']:\n        if type(pair) == str:\n            cluster_dirs.append(os.path.join(cluster_home_path,pair))\n\
       \        else:\n            for key in pair.keys():\n                path =\
@@ -116,8 +118,12 @@ implementation:
       \ = script_with_parameters + ' && ' + script\n                if is_valid:\n\
       \                    cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})\n\
       \            else:\n                print('Missing script when path is available,\
-      \ skipped')\n\n    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run','remote_files','remote_dirs','remote_generators'])\
-      \ \n\n    #Repo\n    for file_path in cluster_repo:\n        for key in file_path.keys():\n\
+      \ skipped')\n\n    #Scheduler\n    cluster_schedulers = []\n    for sche_pair\
+      \ in params['scheduler']:\n        for s_key in sche_pair.keys():\n        \
+      \    if sche_pair[s_key] == None:\n                print('No script supplied\
+      \ to scheduler, skipped')\n            else:\n                for sche_script\
+      \ in sche_pair[s_key]:\n                    cluster_schedulers.append({os.path.join(cluster_home_path,s_key):sche_script})\
+      \    \n    #Repo\n    for file_path in cluster_repo:\n        for key in file_path.keys():\n\
       \            print('Cluster repo (clone): ' + key + ' --> ' + file_path[key])\
       \ \n\n    #Build       \n    for file_path in cluster_exe_build:\n        for\
       \ key in file_path.keys():\n            print('Cluster exe (build): ' + key\
@@ -129,7 +135,13 @@ implementation:
       \   for file_path in cluster_dirs:\n        print('Cluster file path (create):\
       \ ' + file_path)\n\n    #Generators\n    for generators in cluster_generators:\n\
       \        for working_path in generators.keys():\n            print('cd ' + working_path\
-      \ + ' ' + generators[working_path])\n\n    return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,cluster_files,cluster_dirs,cluster_generators)\n\
+      \ + ' run script ' + generators[working_path])\n\n    for schedulers in cluster_schedulers:\n\
+      \        for working_path in schedulers.keys():\n            print('cd ' + working_path\
+      \ + ' qsub ' + schedulers[working_path])\n\n    remote_output = namedtuple('outputs',\
+      \ ['remote_repo','remote_exe_build','remote_exe_run',\n                    \
+      \                   'remote_files','remote_dirs','remote_generators',\n    \
+      \                                   'remote_schedulers'])\n\n    return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,\n\
+      \                         cluster_files,cluster_dirs,cluster_generators,cluster_schedulers)\n\
       \ndef _serialize_json(obj) -> str:\n    if isinstance(obj, str):\n        return\
       \ obj\n    import json\n\n    def default_serializer(obj):\n        if hasattr(obj,\
       \ 'to_struct'):\n            return obj.to_struct()\n        else:\n       \
@@ -139,14 +151,14 @@ implementation:
       import argparse\n_parser = argparse.ArgumentParser(prog='Parse pipeline config\
       \ func', description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"\
       pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
-      ----output-paths\", dest=\"_output_paths\", type=str, nargs=6)\n_parsed_args\
+      ----output-paths\", dest=\"_output_paths\", type=str, nargs=7)\n_parsed_args\
       \ = vars(_parser.parse_args())\n_output_files = _parsed_args.pop(\"_output_paths\"\
       , [])\n\n_outputs = parse_pipeline_config_func(**_parsed_args)\n\n_output_serializers\
       \ = [\n    _serialize_json,\n    _serialize_json,\n    _serialize_json,\n  \
-      \  _serialize_json,\n    _serialize_json,\n    _serialize_json,\n\n]\n\nimport\
-      \ os\nfor idx, output_file in enumerate(_output_files):\n    try:\n        os.makedirs(os.path.dirname(output_file))\n\
-      \    except OSError:\n        pass\n    with open(output_file, 'w') as f:\n\
-      \        f.write(_output_serializers[idx](_outputs[idx]))\n"
+      \  _serialize_json,\n    _serialize_json,\n    _serialize_json,\n    _serialize_json,\n\
+      \n]\n\nimport os\nfor idx, output_file in enumerate(_output_files):\n    try:\n\
+      \        os.makedirs(os.path.dirname(output_file))\n    except OSError:\n  \
+      \      pass\n    with open(output_file, 'w') as f:\n        f.write(_output_serializers[idx](_outputs[idx]))\n"
     args:
     - --pipeline-config
     - {inputPath: pipeline_config}
@@ -157,3 +169,4 @@ implementation:
     - {outputPath: remote_files}
     - {outputPath: remote_dirs}
     - {outputPath: remote_generators}
+    - {outputPath: remote_schedulers}

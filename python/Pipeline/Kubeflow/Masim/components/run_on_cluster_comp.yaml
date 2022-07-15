@@ -8,6 +8,7 @@ inputs:
 - {name: remote_files, type: JsonArray}
 - {name: remote_dirs, type: JsonArray}
 - {name: remote_generators, type: JsonArray}
+- {name: remote_schedulers, type: JsonArray}
 implementation:
   container:
     image: python:3.8
@@ -26,21 +27,24 @@ implementation:
     - "def run_on_cluster_func(pipeline_config,\n                        ssh_key,\n\
       \                        remote_repo,\n                        remote_exe_build,\n\
       \                        remote_exe_run,\n                        remote_files,\n\
-      \                        remote_dirs,\n                        remote_generators):\n\
-      \    import paramiko\n    import yaml\n    import os\n    import time\n\n  \
-      \  print('Running on cluster')\n\n    def cmd_cp(src, dst):\n        return\
-      \ 'cp ' + src + ' ' + dst\n\n    def cmd_git_clone(repo_info, dir_dst):\n  \
-      \      return 'git clone ' + repo_info + ' ' + dir_dst\n\n    def cmd_wget(file_src,\
-      \ dir_dst):\n        return 'wget ' + file_src + ' -P ' + dir_dst\n\n    def\
-      \ cmd_generator(working_dir, generator_script):\n        return 'cd ' + working_dir\
-      \ + ' && ' + generator_script\n\n    class PipelineClient():\n        ssh =\
-      \ paramiko.SSHClient()\n        sftp = 0\n\n        def disconnect(self):\n\
-      \            self.ssh.close()\n            self.sftp.close()\n\n        def\
-      \ run_cmd_remotely(self,command):\n            print(\"[Remote] >>> \", command)\n\
-      \            (stdin, stdout, stderr) = self.ssh.exec_command(command,get_pty=True)\n\
-      \            for line in stdout.readlines():\n                print(line)\n\
-      \            err = stderr.read().decode()\n            if err:\n           \
-      \     print(err)\n\n        def is_dir_path_existed_remotely(self,file_path):\n\
+      \                        remote_dirs,\n                        remote_generators,\n\
+      \                        remote_schedulers):\n    import paramiko\n    import\
+      \ yaml\n    import os\n\n    print('Running on cluster')\n\n    def cmd_git_clone(repo_info,\
+      \ dir_dst):\n        return 'git clone ' + repo_info + ' ' + dir_dst\n\n   \
+      \ def cmd_git_checkout(repo_info, dir_dst):\n        branch = repo_info.split('-b\
+      \ ')[-1]\n        return 'cd ' + repo_info + ' git checkout ' + branch + ' &&\
+      \ git pull'\n\n    def cmd_wget(file_src, dir_dst):\n        return 'wget '\
+      \ + file_src + ' -P ' + dir_dst + ' -N'\n\n    def cmd_generator(working_dir,\
+      \ generator_script):\n        return 'cd ' + working_dir + ' && ' + generator_script\n\
+      \n    def cmd_cp(src, dst):\n        return 'cp ' + src + ' ' + dst\n\n    def\
+      \ cmd_qsub(working_path, job):\n        return 'cd ' + working_path + ' && qsub\
+      \ ' + job\n\n    class PipelineClient():\n        ssh = paramiko.SSHClient()\n\
+      \        sftp = 0\n\n        def disconnect(self):\n            self.ssh.close()\n\
+      \            self.sftp.close()\n\n        def run_cmd_remotely(self,command):\n\
+      \            print(\"[Remote] >>> \", command)\n            (stdin, stdout,\
+      \ stderr) = self.ssh.exec_command(command,get_pty=True)\n            for line\
+      \ in stdout.readlines():\n                print(line)\n            err = stderr.read().decode()\n\
+      \            if err:\n                print(err)\n\n        def is_dir_path_existed_remotely(self,file_path):\n\
       \            is_existed = False\n            try:\n                self.sftp.chdir(file_path)\
       \ # sub-directory exists\n                print(file_path + ' exists')\n   \
       \             is_existed = True\n            except IOError:\n             \
@@ -90,7 +94,9 @@ implementation:
       \    #Connect to server\n    client = PipelineClient()\n    ssh, sftp = client.connect(params['ssh']['address'],\
       \ params['ssh']['username'],ssh_key)\n    client.run_cmd_remotely('ls -l') \
       \   \n\n    #Pull repo\n    for repo in remote_repo:\n        for working_path\
-      \ in repo.keys():\n            client.run_cmd_remotely(cmd_git_clone(repo[working_path],working_path))\n\
+      \ in repo.keys():\n            if client.is_dir_path_existed_remotely(working_path):\n\
+      \                client.run_cmd_remotely(cmd_git_checkout(repo[working_path],working_path))\n\
+      \            else:\n                client.run_cmd_remotely(cmd_git_clone(repo[working_path],working_path))\n\
       \n    #Create dirs\n    for file_path in remote_dirs:\n        client.mkdir_nested_remotely(file_path)\n\
       \        print('Created cluster path: ' + file_path)\n\n    #Copy files\n  \
       \  for files in remote_files:\n        for working_path in files.keys():\n \
@@ -103,27 +109,25 @@ implementation:
       \n    #Preparing for run\n    exe_path_src = ''\n    exe_path_dst = ''\n   \
       \ for build,run in zip(remote_exe_build, remote_exe_run):\n        for key in\
       \ build.keys():\n            exe_path_src = os.path.join(key,build[key])\n \
-      \           exe_path_dst = run[key].split(' ')[0]            \n\n    # while\
-      \ not client.is_file_path_existed_remotely(exe_path_src):\n    #     print('Still\
-      \ building, wait for 10s')\n    #     time.sleep(10)    \n    # if client.is_file_path_existed_remotely(exe_path_src):\n\
-      \    #     client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n    #\
-      \     print('Copy ' + exe_path_src +' --> ' + exe_path_dst)\n    # else:\n \
-      \   #     print('Built binary is not existed, please check build log and try\
-      \ again')\n\n    client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n\
-      \    print('Copy ' + exe_path_src +' --> ' + exe_path_dst)    \n\nimport json\n\
-      import argparse\n_parser = argparse.ArgumentParser(prog='Run on cluster func',\
-      \ description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"pipeline_config\"\
-      , type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
-      --ssh-key\", dest=\"ssh_key\", type=str, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-repo\", dest=\"remote_repo\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-exe-build\"\
-      , dest=\"remote_exe_build\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-exe-run\", dest=\"remote_exe_run\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-files\"\
-      , dest=\"remote_files\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-dirs\", dest=\"remote_dirs\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-generators\"\
-      , dest=\"remote_generators\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      \           exe_path_dst = run[key].split(' ')[0]            \n\n    client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n\
+      \    print('Copy ' + exe_path_src +' --> ' + exe_path_dst)    \n\n    #Schedule\
+      \ jobs\n    for schedulers in remote_schedulers:\n        for working_path in\
+      \ schedulers.keys():\n            client.run_cmd_remotely(cmd_qsub(working_path,\
+      \ schedulers[working_path]))\n\nimport json\nimport argparse\n_parser = argparse.ArgumentParser(prog='Run\
+      \ on cluster func', description='')\n_parser.add_argument(\"--pipeline-config\"\
+      , dest=\"pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--ssh-key\", dest=\"ssh_key\", type=str, required=True,\
+      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-repo\", dest=\"\
+      remote_repo\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-exe-build\", dest=\"remote_exe_build\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-exe-run\"\
+      , dest=\"remote_exe_run\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-files\", dest=\"remote_files\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-dirs\"\
+      , dest=\"remote_dirs\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-generators\", dest=\"remote_generators\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-schedulers\"\
+      , dest=\"remote_schedulers\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
       _parsed_args = vars(_parser.parse_args())\n\n_outputs = run_on_cluster_func(**_parsed_args)\n"
     args:
     - --pipeline-config
@@ -142,3 +146,5 @@ implementation:
     - {inputValue: remote_dirs}
     - --remote-generators
     - {inputValue: remote_generators}
+    - --remote-schedulers
+    - {inputValue: remote_schedulers}

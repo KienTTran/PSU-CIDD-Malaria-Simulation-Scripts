@@ -179,12 +179,7 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                 print('No script supplied to scheduler, skipped')
             else:
                 for sche_script in sche_pair[s_key]:
-                    cluster_schedulers.append({os.path.join(cluster_home_path,s_key):sche_script})
-    
-    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run',
-                                           'remote_files','remote_dirs','remote_generators',
-                                           'remote_schedulers']) 
-    
+                    cluster_schedulers.append({os.path.join(cluster_home_path,s_key):sche_script})    
     #Repo
     for file_path in cluster_repo:
         for key in file_path.keys():
@@ -217,6 +212,10 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     for schedulers in cluster_schedulers:
         for working_path in schedulers.keys():
             print('cd ' + working_path + ' qsub ' + schedulers[working_path])
+
+    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run',
+                                       'remote_files','remote_dirs','remote_generators',
+                                       'remote_schedulers'])
                 
     return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,
                          cluster_files,cluster_dirs,cluster_generators,cluster_schedulers)
@@ -234,16 +233,18 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     import paramiko
     import yaml
     import os
-    import time
     
     print('Running on cluster')
     
-    
     def cmd_git_clone(repo_info, dir_dst):
         return 'git clone ' + repo_info + ' ' + dir_dst
+
+    def cmd_git_checkout(repo_info, dir_dst):
+        branch = repo_info.split('-b ')[-1]
+        return 'cd ' + repo_info + ' git checkout ' + branch + ' && git pull'
     
     def cmd_wget(file_src, dir_dst):
-        return 'wget -O ' + file_src + ' -P ' + dir_dst
+        return 'wget ' + file_src + ' -P ' + dir_dst + ' -N'
     
     def cmd_generator(working_dir, generator_script):
         return 'cd ' + working_dir + ' && ' + generator_script
@@ -252,7 +253,7 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
         return 'cp ' + src + ' ' + dst
     
     def cmd_qsub(working_path, job):
-        return 'cp ' + working_path + ' && qsub ' + job
+        return 'cd ' + working_path + ' && qsub ' + job
     
     class PipelineClient():
         ssh = paramiko.SSHClient()
@@ -370,7 +371,10 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     #Pull repo
     for repo in remote_repo:
         for working_path in repo.keys():
-            client.run_cmd_remotely(cmd_git_clone(repo[working_path],working_path))
+            if client.is_dir_path_existed_remotely(working_path):
+                client.run_cmd_remotely(cmd_git_checkout(repo[working_path],working_path))
+            else:
+                client.run_cmd_remotely(cmd_git_clone(repo[working_path],working_path))
     
     #Create dirs
     for file_path in remote_dirs:
