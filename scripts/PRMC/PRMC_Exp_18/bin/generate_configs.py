@@ -87,6 +87,25 @@ if __name__=="__main__":
         yaml.dump(new_data, output_stream)
         output_stream.close()   
             
+    #Change job_template file
+    f = open("job_template.template",'r')
+    template = f.read()
+    f.close()
+    new_file_data = template.replace("#JOB_NAME#", params['name'] + "\n")   
+    f = open("job_template.pbs",'w')
+    f.write(new_file_data)
+    f.close()   
+            
+    #Change submit_all_jobs file
+    f = open("submit_all_jobs.template",'r')
+    template = f.read()
+    f.close()
+    new_file_data = template.replace("#TOTAL_CONFIGS#",str(config_number - 1) + "\n")
+    new_file_data = new_file_data.replace("#REPLICATES#",str(params['replicates'][0]) + "\n")
+    f = open("submit_all_jobs.pbs",'w')
+    f.write(new_file_data)
+    f.close()
+    
     with open(r"submit_all_jobs.template", "r") as old_file:
         with open(r"submit_all_jobs.pbs", "w") as new_file:
             for line in old_file:
