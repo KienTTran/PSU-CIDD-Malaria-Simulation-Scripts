@@ -37,7 +37,7 @@ if __name__=="__main__":
         print("Created folder: " + config_path)
     else:
         print("Cleaning old files in folder: " + config_folder)
-        subprocess.run('rm -rf ' + config_folder)
+        subprocess.call('rm -rf ' + config_folder, shell=True)
         os.mkdir(config_path)
     params = read_parameters(parameter_file)
     print(params)
