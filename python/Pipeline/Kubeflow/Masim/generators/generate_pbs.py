@@ -43,8 +43,6 @@ if __name__=="__main__":
     #z
     params['z'] = np.arange(params['z'][0],params['z'][1],params['z'][2])
   
-    config_df = pd.DataFrame()
-    config = []
     config_number = 0
     for beta in params['beta']:
         for z in params['z']:
@@ -69,7 +67,7 @@ if __name__=="__main__":
     template = f.read()
     f.close()
     new_file_data = template.replace("#USERNAME#",username + "\n")
-    new_file_data = new_file_data.replace("#TOTAL_CONFIGS#",str(len(config_df) - 1) + "\n")
+    new_file_data = new_file_data.replace("#TOTAL_CONFIGS#",str(config_number) + "\n")
     new_file_data = new_file_data.replace("#REPLICATES#",str(params['replicates'][0]) + "\n")
     f = open(submit_job_pbs_file,'w')
     f.write(new_file_data)
