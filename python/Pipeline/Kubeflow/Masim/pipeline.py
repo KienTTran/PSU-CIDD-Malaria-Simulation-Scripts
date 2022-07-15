@@ -241,7 +241,7 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
 
     def cmd_git_checkout(repo_info, dir_dst):
         branch = repo_info.split('-b ')[-1]
-        return 'cd ' + repo_info + ' git checkout ' + branch + ' && git pull'
+        return 'cd ' + dir_dst + ' && git checkout ' + branch + ' && git pull'
     
     def cmd_wget(file_src, dir_dst):
         return 'wget ' + file_src + ' -P ' + dir_dst + ' -N'

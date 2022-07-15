@@ -30,6 +30,18 @@ if __name__=="__main__":
     
     params = read_parameters(parameter_file)
     print(params)   
+    
+    #Calculate beta log10
+    start = math.log10(params['beta'][0])
+    stop = math.log10(params['beta'][1])
+    step = (stop - start)/params['beta'][-1]
+    log10_beta = np.arange(start,stop,step)
+    betas = 10**log10_beta
+    params['beta'] = betas
+    #kappa
+    params['kappa'] = np.arange(params['kappa'][0],params['kappa'][1],params['kappa'][2])
+    #z
+    params['z'] = np.arange(params['z'][0],params['z'][1],params['z'][2])
   
     config_df = pd.DataFrame()
     config = []

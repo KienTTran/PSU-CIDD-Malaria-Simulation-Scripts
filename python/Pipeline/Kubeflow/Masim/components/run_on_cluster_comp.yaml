@@ -32,7 +32,7 @@ implementation:
       \ yaml\n    import os\n\n    print('Running on cluster')\n\n    def cmd_git_clone(repo_info,\
       \ dir_dst):\n        return 'git clone ' + repo_info + ' ' + dir_dst\n\n   \
       \ def cmd_git_checkout(repo_info, dir_dst):\n        branch = repo_info.split('-b\
-      \ ')[-1]\n        return 'cd ' + repo_info + ' git checkout ' + branch + ' &&\
+      \ ')[-1]\n        return 'cd ' + dir_dst + ' git checkout ' + branch + ' &&\
       \ git pull'\n\n    def cmd_wget(file_src, dir_dst):\n        return 'wget '\
       \ + file_src + ' -P ' + dir_dst + ' -N'\n\n    def cmd_generator(working_dir,\
       \ generator_script):\n        return 'cd ' + working_dir + ' && ' + generator_script\n\
