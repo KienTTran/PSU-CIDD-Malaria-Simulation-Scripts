@@ -20,7 +20,9 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                                                                                 ('remote_exe_run', list),
                                                                                 ('remote_files', list),
                                                                                 ('remote_dirs', list),
-                                                                                ('remote_generators', list)]):
+                                                                                ('remote_generators', list),
+                                                                                ('remote_schedulers', list)
+                                                                                ]):
     import yaml
     import os
     from collections import namedtuple
@@ -77,9 +79,9 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                                         parameter_str += ' ' + parameter
                             except Exception as e:
                                 print('Missing ' + str(e) + ', use empty parameters')
-                            pj_exe_run_with_parameters = pj_exe_run_path + ' ' + parameter_str
+                            pj_exe_run_with_parameters = os.path.join(cluster_home_path,pj_exe_run_path) + ' ' + parameter_str
                             cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})
-                                
+                        #Repo        
                         pj_repo = pair[p_key]['repo']
                         if pj_repo == None:
                             print('Repo is empty')
@@ -168,8 +170,20 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
                     cluster_generators.append({os.path.join(cluster_home_path,working_path):script_with_parameters})
             else:
                 print('Missing script when path is available, skipped')
-                 
-    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run','remote_files','remote_dirs','remote_generators']) 
+         
+    #Scheduler
+    cluster_schedulers = []
+    for sche_pair in params['scheduler']:
+        for s_key in sche_pair.keys():
+            if sche_pair[s_key] == None:
+                print('No script supplied to scheduler, skipped')
+            else:
+                for sche_script in sche_pair[s_key]:
+                    cluster_schedulers.append({os.path.join(cluster_home_path,s_key):sche_script})
+    
+    remote_output = namedtuple('outputs', ['remote_repo','remote_exe_build','remote_exe_run',
+                                           'remote_files','remote_dirs','remote_generators',
+                                           'remote_schedulers']) 
     
     #Repo
     for file_path in cluster_repo:
@@ -198,9 +212,14 @@ def parse_pipeline_config_func(pipeline_config: comp.InputArtifact()) -> NamedTu
     #Generators
     for generators in cluster_generators:
         for working_path in generators.keys():
-            print('cd ' + working_path + ' ' + generators[working_path])
+            print('cd ' + working_path + ' run script ' + generators[working_path])
+
+    for schedulers in cluster_schedulers:
+        for working_path in schedulers.keys():
+            print('cd ' + working_path + ' qsub ' + schedulers[working_path])
                 
-    return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,cluster_files,cluster_dirs,cluster_generators)
+    return remote_output(cluster_repo,cluster_exe_build,cluster_exe_run,
+                         cluster_files,cluster_dirs,cluster_generators,cluster_schedulers)
     
 
 def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
@@ -210,7 +229,8 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
                         remote_exe_run: list,
                         remote_files: list,
                         remote_dirs: list,
-                        remote_generators: list):
+                        remote_generators: list,
+                        remote_schedulers: list):
     import paramiko
     import yaml
     import os
@@ -218,17 +238,21 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
     
     print('Running on cluster')
     
-    def cmd_cp(src, dst):
-        return 'cp ' + src + ' ' + dst
     
     def cmd_git_clone(repo_info, dir_dst):
         return 'git clone ' + repo_info + ' ' + dir_dst
     
     def cmd_wget(file_src, dir_dst):
-        return 'wget ' + file_src + ' -P ' + dir_dst
+        return 'wget -O ' + file_src + ' -P ' + dir_dst
     
     def cmd_generator(working_dir, generator_script):
         return 'cd ' + working_dir + ' && ' + generator_script
+    
+    def cmd_cp(src, dst):
+        return 'cp ' + src + ' ' + dst
+    
+    def cmd_qsub(working_path, job):
+        return 'cp ' + working_path + ' && qsub ' + job
     
     class PipelineClient():
         ssh = paramiko.SSHClient()
@@ -375,17 +399,14 @@ def run_on_cluster_func(pipeline_config: comp.InputArtifact(),
         for key in build.keys():
             exe_path_src = os.path.join(key,build[key])
             exe_path_dst = run[key].split(' ')[0]            
+        
+    client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))
+    print('Copy ' + exe_path_src +' --> ' + exe_path_dst)    
     
-    # while not client.is_file_path_existed_remotely(exe_path_src):
-    #     print('Still building, wait for 10s')
-    #     time.sleep(10)
-    
-    if client.is_file_path_existed_remotely(exe_path_src):
-        client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))
-        print('Copy ' + exe_path_src +' --> ' + exe_path_dst)
-    else:
-        print('Built binary is not existed, please check build log and try again')
-    
+    #Schedule jobs
+    for schedulers in remote_schedulers:
+        for working_path in schedulers.keys():
+            client.run_cmd_remotely(cmd_qsub(working_path, schedulers[working_path]))
     
 def pipeline():        
     pipeline_config_download_task = download_op(url = pipeline_config_url)
@@ -415,6 +436,7 @@ def pipeline():
                                             remote_files = parse_pipeline_config_task.outputs['remote_files'],
                                             remote_dirs = parse_pipeline_config_task.outputs['remote_dirs'],
                                             remote_generators = parse_pipeline_config_task.outputs['remote_generators'],
+                                            remote_schedulers = parse_pipeline_config_task.outputs['remote_schedulers'],
                                             )
     
 
@@ -480,7 +502,7 @@ for pair in params['project']:
                                     parameter_str += ' ' + parameter
                         except Exception as e:
                             print('Missing ' + str(e) + ', use empty parameters')
-                        pj_exe_run_with_parameters = pj_exe_run_path + ' ' + parameter_str
+                        pj_exe_run_with_parameters = os.path.join(cluster_home_path,pj_exe_run_path) + ' ' + parameter_str
                         cluster_exe_run.append({os.path.join(cluster_home_path,pj_path):pj_exe_run_with_parameters})
                             
                     pj_repo = pair[p_key]['repo']
@@ -620,8 +642,31 @@ for generators in cluster_generators:
             
 print(generator_cmd)
         
-            
-                
+
+#%%
+import yaml
+import os
+
+params = 0    
+print("Reading " + 'pipeline.yml')
+with open('pipeline.yml','r') as file:
+    params =  yaml.full_load(file)
+    
+cluster_username = params['ssh']['username']
+cluster_home_path = "/storage/home/" + cluster_username[0] + "/" + cluster_username
+
+cluster_schedulers = []
+for sche_pair in params['scheduler']:
+    for s_key in sche_pair.keys():
+        if sche_pair[s_key] == None:
+            print('No script supplied to scheduler, skipped')
+        else:
+            for sche_script in sche_pair[s_key]:
+                cluster_schedulers.append({os.path.join(cluster_home_path,s_key):sche_script})
+
+for schedulers in cluster_schedulers:
+    for working_path in schedulers.keys():
+        print(working_path,schedulers[working_path])
             
             
             

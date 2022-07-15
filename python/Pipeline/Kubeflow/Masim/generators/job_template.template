@@ -34,7 +34,7 @@
 PROGDIR=../bin
 PROG=$PROGDIR/#JOB_EXE#
 ###### arguments for the executable
-ARGS="-i $PROGDIR/generated_inputs/${INPUT_FILE} -j ${NUMBER_ARG}"
+ARGS="-i $PROGDIR/generated_inputs/${INPUT_FILE} -j ${NUMBER_ARG}" -r ValidationReporter
 echo ""
 #
 ###### change directory to avoid running directly in home, and  to specify output dir

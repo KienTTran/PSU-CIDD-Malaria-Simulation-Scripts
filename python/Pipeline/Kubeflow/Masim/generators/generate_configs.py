@@ -8,6 +8,7 @@ import yaml
 import math
 import copy
 import sys
+import subprocess
 
 def read_parameters(parameter):
     params = {}
@@ -19,15 +20,10 @@ def read_parameters(parameter):
     return params
         
 if __name__=="__main__":
-    config_folder = str(sys.argv[1])
-    parameter_file = str(sys.argv[2])
-    config_file = str(sys.argv[3])
-    username = str(sys.argv[4])
-    job_name = str(sys.argv[5])
-    job_template_file = str(sys.argv[6])
-    submit_job_template_file = str(sys.argv[7])
-    job_exe = 'MaSim'
-    csv_file = 'configs.csv'
+    parameter_file = str(sys.argv[1])
+    config_file = str(sys.argv[2])
+    csv_file = str(sys.argv[3])
+    config_folder = str(sys.argv[4])
     
     file_path = str(Path.cwd())
     if "\\" in file_path:
@@ -35,9 +31,13 @@ if __name__=="__main__":
     else:
         folder = file_path.split("/")[-1]
     config_path = os.path.join(Path.cwd(), config_folder)
+    print("Will generate configs to folder: " + config_path)
     if not os.path.exists(config_folder):
         os.mkdir(config_path)
-    print("Will generate configs to folder: " + config_path)
+        print("Created folder: " + config_path)
+    else:
+        print("Cleaning old files in folder: " + config_path)
+        subprocess.run('rm -rf ' + config_path + '/*')
     params = read_parameters(parameter_file)
     print(params)
      
@@ -98,28 +98,6 @@ if __name__=="__main__":
     except Exception as e:
         print("Generate input error " + str(e) + ', please check and rerun')
         exit(0)
-        
-    #Change job_template file
-    f = open(job_template_file,'r')
-    template = f.read()
-    f.close()
-    new_file_data = template.replace("#JOB_NAME#", job_name + "\n")
-    new_file_data = new_file_data.replace("#JOB_EXE#", job_exe + "\n")
-    
-    f = open(job_template_file.replace('.template','.pbs'),'w')
-    f.write(new_file_data)
-    f.close()            
-    	
-    #Change submit_all_jobs file
-    f = open(submit_job_template_file,'r')
-    template = f.read()
-    f.close()
-    new_file_data = template.replace("#USERNAME#",username + "\n")
-    new_file_data = new_file_data.replace("#TOTAL_CONFIGS#",str(len(config_df) - 1) + "\n")
-    new_file_data = new_file_data.replace("#REPLICATES#",str(params['replicates'][0]) + "\n")
-    f = open(submit_job_template_file.replace('.template','.pbs'),'w')
-    f.write(new_file_data)
-    f.close()
     
     
     

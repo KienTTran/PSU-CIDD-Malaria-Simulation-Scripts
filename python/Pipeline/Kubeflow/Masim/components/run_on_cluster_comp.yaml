@@ -105,25 +105,26 @@ implementation:
       \ build.keys():\n            exe_path_src = os.path.join(key,build[key])\n \
       \           exe_path_dst = run[key].split(' ')[0]            \n\n    # while\
       \ not client.is_file_path_existed_remotely(exe_path_src):\n    #     print('Still\
-      \ building, wait for 10s')\n    #     time.sleep(10)\n\n    if client.is_file_path_existed_remotely(exe_path_src):\n\
-      \        client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n      \
-      \  print('Copy ' + exe_path_src +' --> ' + exe_path_dst)\n    else:\n      \
-      \  print('Built binary is not existed, please check build log and try again')\n\
-      \nimport json\nimport argparse\n_parser = argparse.ArgumentParser(prog='Run\
-      \ on cluster func', description='')\n_parser.add_argument(\"--pipeline-config\"\
-      , dest=\"pipeline_config\", type=str, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--ssh-key\", dest=\"ssh_key\", type=str, required=True,\
-      \ default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-repo\", dest=\"\
-      remote_repo\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-exe-build\", dest=\"remote_exe_build\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-exe-run\"\
-      , dest=\"remote_exe_run\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-files\", dest=\"remote_files\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-dirs\"\
-      , dest=\"remote_dirs\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
-      _parser.add_argument(\"--remote-generators\", dest=\"remote_generators\", type=json.loads,\
-      \ required=True, default=argparse.SUPPRESS)\n_parsed_args = vars(_parser.parse_args())\n\
-      \n_outputs = run_on_cluster_func(**_parsed_args)\n"
+      \ building, wait for 10s')\n    #     time.sleep(10)    \n    # if client.is_file_path_existed_remotely(exe_path_src):\n\
+      \    #     client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n    #\
+      \     print('Copy ' + exe_path_src +' --> ' + exe_path_dst)\n    # else:\n \
+      \   #     print('Built binary is not existed, please check build log and try\
+      \ again')\n\n    client.run_cmd_remotely(cmd_cp(exe_path_src,exe_path_dst))\n\
+      \    print('Copy ' + exe_path_src +' --> ' + exe_path_dst)    \n\nimport json\n\
+      import argparse\n_parser = argparse.ArgumentParser(prog='Run on cluster func',\
+      \ description='')\n_parser.add_argument(\"--pipeline-config\", dest=\"pipeline_config\"\
+      , type=str, required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"\
+      --ssh-key\", dest=\"ssh_key\", type=str, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-repo\", dest=\"remote_repo\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-exe-build\"\
+      , dest=\"remote_exe_build\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-exe-run\", dest=\"remote_exe_run\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-files\"\
+      , dest=\"remote_files\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parser.add_argument(\"--remote-dirs\", dest=\"remote_dirs\", type=json.loads,\
+      \ required=True, default=argparse.SUPPRESS)\n_parser.add_argument(\"--remote-generators\"\
+      , dest=\"remote_generators\", type=json.loads, required=True, default=argparse.SUPPRESS)\n\
+      _parsed_args = vars(_parser.parse_args())\n\n_outputs = run_on_cluster_func(**_parsed_args)\n"
     args:
     - --pipeline-config
     - {inputPath: pipeline_config}

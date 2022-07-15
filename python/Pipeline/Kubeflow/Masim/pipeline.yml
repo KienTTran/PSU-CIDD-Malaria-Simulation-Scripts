@@ -20,14 +20,14 @@ remote:
     - work/Pipeline_1/output
     - work/Pipeline_1/raw
     - work/Pipeline_1/bin:
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/generate_configs.py
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/parameters.yml
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/input.yml
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/job_template.template
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/upload/submit_all_jobs.template
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/generate_configs.py
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/parameters.yml
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/input.yml
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/job_template.template
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/submit_all_jobs.template
     - *project:
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/generate_build_script.py
-        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/build/build.template
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/generate_build_script.py
+        - https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/generators/build.template
         
 generator:
     - *project:
@@ -44,13 +44,21 @@ generator:
         - script:
             name: generate_configs.py
             parameters:
-            - generated_configs
             - parameters.yml
             - input.yml
-            - *username
-            - Pipeline_1
+            - configs.csv
+            - generated_configs    
+    - work/Pipeline_1/bin:
+        - script:
+            name: generate_pbs.py
+            parameters:
+            - parameters.yml
             - job_template.template
             - submit_all_jobs.template
+            - *username
+            - Pipeline_1
+            - job_template.pbs
+            - submit_all_jobs.pbs
         - bash: 'ls -l && cp job_template.pbs ../raw/ && cp submit_all_jobs.pbs ../raw/'
         
 scheduler:
