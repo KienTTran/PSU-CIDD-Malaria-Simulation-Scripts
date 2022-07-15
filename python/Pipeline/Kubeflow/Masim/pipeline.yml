@@ -49,7 +49,7 @@ generator:
             - parameters.yml
             - input.yml
             - configs.csv
-            - generated_configs    
+            - generated_inputs   
     - work/Pipeline_1/bin:
         - script:
             name: generate_pbs.py
