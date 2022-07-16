@@ -8,3 +8,9 @@ project:
             url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
             branch: dev
         run: work/Pipeline_2
+        
+generator:
+    script: https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/V2/generators/generate_configs.py
+    parameter: https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/V2/generators/parameters.yml
+    input: https://raw.githubusercontent.com/KienTTran/PSU-CIDD-Malaria-Simulation-Scripts/master/python/Pipeline/Kubeflow/Masim/V2/generators/input.yml
+    
