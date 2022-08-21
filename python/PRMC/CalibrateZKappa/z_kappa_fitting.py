@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-exp_number = '18_3'
+exp_number = '18_N'
 
 local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
 local_path_raw = local_path + "\\raw"
@@ -27,18 +27,6 @@ data['logEIR'] = np.log10(data['eir'])
 observed_EIR = np.log10([10,18,20,30,37.5,38,200,200])
 observed_age2to10 = ([1.6/0.5, 0.42/0.13, 2.2/2.8, 2.1/2.7, 1.55/0.3, 0.87/0.28, 5/0.6, 5/0.5])
 #%%
-def expfunc(x, a,b,c):
-    return a*np.exp(b*x) + c
-    # return a*np.exp(b*x) + 0.97
-    
-def sigmoid(x, L ,x0, k,b):
-    y = L / (1 + np.exp(-k*(x-x0))) + 0.97
-    return (y)
-
-def curvefunc(x, a,b,c):
-    return a*np.exp(b*x) + c
-    # return a*np.exp(b*x) + 0.97
-#%%
 import seaborn as sns
 from matplotlib import pyplot as plt
 from numpy import mean, sqrt, square
@@ -49,11 +37,12 @@ nc = len(data.kappa.unique())
 def my_curve_fit(data):
     # p0 = [data.age2to10.max(), np.median(data.logEIR),1, data.age2to10.min()] # this is an mandatory initial guess
     # popt,pcov = curve_fit(sigmoid, data.logEIR, data.age2to10, p0, maxfev=5000, method='trf')
-
-    p0 = [1,1, data.age2to10.min()] # this is an mandatory initial guess
-    popt,pcov = curve_fit(curvefunc, data.logEIR, data.age2to10, p0, maxfev=15000)
+    fn = lambda x, a, b : a*np.exp(b*x) + data.age2to10.min()
+    p0 = [1,1] # this is an mandatory initial guess
+    popt,pcov = curve_fit(fn, data.logEIR, data.age2to10, p0, maxfev=15000)
     
-    return curvefunc,popt,pcov
+    return fn,popt,pcov
+
 
 rmsq_data = []
 
@@ -62,7 +51,6 @@ for i_z, z in enumerate(data.z.unique()):
         f_data = data[(data.z == z) & (data.kappa == kappa)]
         
         func, popt, pcov = my_curve_fit(f_data)
-     
         rmsq_score = sqrt(mean(square( func(observed_EIR, *popt) - observed_age2to10)))
         
         rmsq_data.append([z, kappa, rmsq_score])
@@ -81,14 +69,20 @@ print(rmsq_df.iloc[min_row,:])
 rmsq_df.rmsq_error = 2*np.log(rmsq_df.rmsq_error)
 rmsq_df = rmsq_df.pivot("z", "kappa", "rmsq_error")
 
-# rmsq_df_smooth =  pd.DataFrame(gaussian_filter(rmsq_df, sigma=1))
-# rmsq_df_smooth.columns = rmsq_df.columns
-# rmsq_df_smooth.index = rmsq_df.index
+rmsq_df.columns = np.round(rmsq_df.columns,4)
+rmsq_df.index = np.round(rmsq_df.index,4)
 
 plot = sns.heatmap(rmsq_df, cmap="rocket_r", cbar_kws={'label': '2*ln_rmse'})
-
 figure = plot.get_figure()   
-figure.savefig(local_path+"heatmap_mosquito.png", dpi=300)
+figure.savefig(local_path+"heatmap.png", dpi=300)
+
+plt.close('all')
+rmsq_df_smooth =  pd.DataFrame(gaussian_filter(rmsq_df, sigma=1))
+rmsq_df_smooth.columns = rmsq_df.columns
+rmsq_df_smooth.index = rmsq_df.index
+plot = sns.heatmap(rmsq_df_smooth, cmap="rocket_r", cbar_kws={'label': '2*ln_rmse'})
+figure = plot.get_figure()   
+figure.savefig(local_path+"heatmap_smooth.png", dpi=300)
 
 #%%
 
@@ -128,4 +122,4 @@ for i_z, z in enumerate(data.z.unique()[range(0,z_len, math.floor(z_len/nr))]):
         axes[i_z,i_kappa].set_ylabel("z=%.2f"%(z))
         axes[i_z,i_kappa].set_xlabel("k=%.2f"%(kappa))
 
-fig.savefig(local_path+"curve_fit_mosquito.png", dpi=300)
+fig.savefig(local_path+"curve_fit.png", dpi=300)

@@ -62,14 +62,15 @@ if __name__=="__main__":
     config_number = 0
     for beta in params['beta']:
         for z in params['z']:
-            for k in params['kappa']:                
-                config_number += 1
-                config.append([beta, z, k])
+            for k in params['kappa']:
+                for ifr in params['ifr']:
+                    config_number += 1
+                    config.append([beta, z, k, ifr])
                 
     print("Total %d configs, %d runs"%(config_number,config_number * params['replicates'][0]))
     
     config_df = pd.DataFrame(config)
-    config_df.columns = ['beta','z','kappa']
+    config_df.columns = ['beta','z','kappa','ifr']
     
     config_df.to_csv("configs.csv",index=True,index_label="Index")
         
@@ -77,7 +78,7 @@ if __name__=="__main__":
     for index, row in df.iterrows():
         new_data = copy.deepcopy(data)
         new_data['location_db']['beta_by_location'] = np.full(number_of_locations, row.beta).tolist()
-        new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, params['ifr'][0]).tolist()
+        new_data['mosquito_config']['interrupted_feeding_rate'] = np.full(number_of_locations, (float)(row.ifr)).tolist()
         new_data['mosquito_config']['prmc_size'] = (int)(params['prmc_size'][0])
         new_data['immune_system_information']['immune_effect_on_progression_to_clinical'] = (float)(row.z)
         new_data['immune_system_information']['factor_effect_age_mature_immunity'] = (float)(row.kappa)
