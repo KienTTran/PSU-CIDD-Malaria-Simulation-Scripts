@@ -1,22 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Apr 19 21:02:18 2022
+Created on Sun Aug 28 21:30:30 2022
 
 @author: kient
 """
+
 import os
 import re
 import pandas as pd
 import numpy as np
 import math
 
-exp_number = '18_22'
+exp_number = 'Calibrate_beta'
 
-local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
-local_path_raw = local_path + "\\raw"
-local_path_bin = local_path + "\\bin"
+local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\"
+local_path_raw = local_path + "\\output"
+local_path_input = local_path + "\\input"
 
-config_df = pd.read_csv(local_path + 'configs.csv',index_col=False)
+config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
 
@@ -59,25 +60,4 @@ data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z"
 
 data_plot["eir_log10"] = data_plot.eir.apply(lambda x: 0 if x == 0 else math.log10(x))
 #%%
-data_plot.to_csv(local_path + "data_plot_calibrating_z_kappa_exp_" + str(exp_number) + ".csv",index=False)
-#%%
-data_plot = pd.read_csv(local_path + "data_plot_calibrating_z_kappa_exp_" + str(exp_number) + ".csv")
-#%%
-import seaborn as sns
-from matplotlib import pyplot as plt
-import math
-import numpy
-
-kappas = numpy.arange(0.1,8.01,0.5)
-data_plot_by_kappa = []
-
-for kappa in kappas:
-    data_plot_by_kappa.append(data_plot[data_plot.kappa == kappa])
-    
-fig, axes = plt.subplots(3,3,sharex=True,sharey=True, squeeze=True)
-for index,data_by_kappa in enumerate(data_plot_by_kappa):
-    # data_by_kappa_plot = data_by_kappa[(data_by_kappa.eir > 19) & (data_by_kappa.eir < 20)]
-    r = index//3
-    c = index % 3
-    sns.scatterplot(data=data_by_kappa,x="eir",y="age2",hue="z", ax=axes[r,c])
-    
+data_plot.to_csv(local_path + str(exp_number) + ".csv",index=False)

@@ -10,13 +10,13 @@ import pandas as pd
 import numpy as np
 import math
 
-exp_number = '18_22'
+exp_number = 'Calibrate_Z_Kappa_Treatment_50'
 
-local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
-local_path_raw = local_path + "\\raw"
-local_path_bin = local_path + "\\bin"
+local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\"
+local_path_raw = local_path + "\\output"
+local_path_input = local_path + "\\input"
 
-config_df = pd.read_csv(local_path + 'configs.csv',index_col=False)
+config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
 
@@ -59,9 +59,9 @@ data_plot.columns = ["eir","pfpr",*["age"+str(x) for x in range(60)],"kappa","z"
 
 data_plot["eir_log10"] = data_plot.eir.apply(lambda x: 0 if x == 0 else math.log10(x))
 #%%
-data_plot.to_csv(local_path + "data_plot_calibrating_z_kappa_exp_" + str(exp_number) + ".csv",index=False)
+data_plot.to_csv(local_path + str(exp_number) + ".csv",index=False)
 #%%
-data_plot = pd.read_csv(local_path + "data_plot_calibrating_z_kappa_exp_" + str(exp_number) + ".csv")
+data_plot = pd.read_csv(local_path + str(exp_number) + ".csv")
 #%%
 import seaborn as sns
 from matplotlib import pyplot as plt

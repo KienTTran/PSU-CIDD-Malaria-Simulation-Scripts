@@ -1,0 +1,58 @@
+auth:
+    ssh_address: submit.aci.ics.psu.edu
+    ssh_username: ktt5121
+    ssh_key_url: https://www.dropbox.com/s/d1k7rwmu32muzpu/id_ed25519 
+    ssh_duo_option: 1
+    minio_address: 172.28.86.153:30512
+    minio_key: minio
+    minio_secret: minio123
+
+simulation:
+    - &project_name1 Validation:
+        - &sim_name1 Calibrate_Z_Kappa:
+            build: Github/PSU-CIDD-Malaria-Simulation-Dev
+            script: pipeline_build.sh
+            binary: build/bin/MaSim
+            work: work/
+            local: /mnt/d/plot/
+            check_interval: 60
+            using_tar: true
+            using_storage: true
+            repo:
+                url: https://github.com/KienTTran/PSU-CIDD-Malaria-Simulation.git
+                branch: dev            
+
+#There will be default folders created automatically:
+# - build: contains simulation build
+# - bin: contains simulation binary
+# - input: contains simulation inputs
+# - output: contains simulation outputs
+# - log: contains simulation logs
+# - script: contains simulation scripts
+# - plot: contains simulation plot script and figures
+# If path in script is empty, it will be executed in local env, zip, upload then unzip to work folder,
+# otherwise it will be executed in path, which will be created under work folder.
+task:
+    - *project_name1:
+        - *sim_name1:
+            - generate inputs and pbs:
+                - script:
+                    path:
+                    appended: true
+                    source: https://www.dropbox.com/s/xacrw4h32bo6kid/generate_inputs.py
+                    parameter:
+                    - https://www.dropbox.com/s/sk6v507t6l6ka9c/parameters.yml
+                    - https://www.dropbox.com/s/siaral5hga5poo7/input_template.yml
+                    - https://www.dropbox.com/s/h4tuq9dnp6r414s/job_template.pbs
+                    - https://www.dropbox.com/s/zvp18gy99bgjdbs/submit_all_jobs.pbs
+            - run jobs:
+                - script:
+                    path: log #Job always run on cluster
+                    appended: false
+                    source: 'qsub ../script/submit_all_jobs.pbs'
+                    parameter:                
+
+plot:
+    - *project_name1:
+        - *sim_name1:  
+    

@@ -9,13 +9,15 @@ import pandas as pd
 import numpy as np
 from scipy.optimize import curve_fit
 
-exp_number = '18_22'
+exp_number = 'Calibrate_Z_Kappa_Re_Run_Merged'
 
-local_path = "D:\\plot\\PRMC_Exp_" + str(exp_number) + "\\"
-local_path_raw = local_path + "\\raw"
-local_path_bin = local_path + "\\bin"
+local_path = "D:\\plot\\Validation\\Calibrate_Z_Kappa\\merged\\"
+local_path_output = local_path + "\\output"
 
-data = pd.read_csv(local_path + "data_plot_calibrating_z_kappa_exp_" + str(exp_number) + ".csv")
+config_df = pd.read_csv(local_path + 'configs.csv',index_col='Index')
+# config_df.set_index('Index', inplace=True)
+
+data = pd.read_csv(local_path + str(exp_number) + ".csv")
 
 data['age2to10'] = data.age1/data.age9
 
