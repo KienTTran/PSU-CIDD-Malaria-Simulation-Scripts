@@ -21,18 +21,18 @@ local_path_input = local_path + "\\input"
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
-tm,kappa = {0.0, 0.1}
-# tm,kappa = {0.5, 0.1}
-z = 5.2
+# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
 
 #%%
-n_run = 1
+n_run = 100
 data = []
 for index,config in config_df.iterrows():
     # print(index,config)
     for run in range(n_run):
         # print(run)
-        if config.treatment == tm and config.kappa == kappa and config.z == z:
+        if float(config.treatment) == float(tm) and float(config.kappa) == float(kappa) \
+        and float(config.z) == float(z) and float(config.gamma_sd) == float(gamma_sd):
             filename_summary = "validation_summary_%d.txt"%(index*1000 + run)
             filename_monthly = "validation_monthly_data_%d.txt"%(index*1000 + run)
             # print(filename)        
@@ -57,8 +57,7 @@ for index,config in config_df.iterrows():
                 r_monthly.append((float)(z))
                 r_monthly.append((float)(beta))
             except Exception as e:
-                print(csv_summary + " error reading " + str(e))
-            
+                print(csv_summary + " error reading " + str(e))            
             data.append(r_summary + r_monthly) 
         
 data_plot = pd.DataFrame(data)
@@ -67,51 +66,32 @@ data_plot.columns = ["eir","pfpr",*[str(x+1) for x in range(15)],"kappa","z","be
 data_plot.to_csv(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + ".csv",index=False)  
 #%%
 data_plot = pd.read_csv(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + ".csv")
-#%%
-
-pfpr_index_to_plot = [
-                        2,
-                        4,
-                        6,
-                        8,
-                        11,
-                        13,
-                        15,
-                        16,
-                        18
-                        ]
-
-data_reduced = []
-for index,row in data_plot.iterrows():
-    if index in pfpr_index_to_plot:
-        data_reduced.append(row)
-        
-data_plot_reduced = pd.DataFrame(data_reduced)
-age_class = data_plot_reduced.columns[2:62]
-
-# id_vars=['beta', 'z', 'kappa', 'eir','pfpr'], var_name=[*age_class], value_name='freq'
-data_plot_reduced_melt = data_plot_reduced.melt(id_vars=['beta', 'z', 'kappa', 'eir','pfpr'],var_name='age_class', value_name='value')
 
 #%%
-plot = sns.relplot(data=data_plot_reduced_melt,
-                x='age_class',
-                y='value',
-                col='eir',
-                col_wrap=3,
-                facet_kws=dict(sharey=True))
-# plot = sns.catplot(data=data_plot_reduced_melt,
-#                 x='age_class',
-#                 y='value',
-#                 col='eir',
-#                 col_wrap=3,
-#                 kind='box',
-#                 sharey=False)
-plot.set(xscale="log")
+betas = data_plot.beta.unique()
 
-plot.set(xlim=(0,60))
-# plot.set_yticks(range(0,100,10))
-plot.set(xlabel='Age Class')
-plot.set(ylabel='Clinical episode per person per year')
-# plot.set(xlim=(0, 10))
+# ages = [1,2,3,4,5,6,7,8,9,10,11,17,40,60]
 
-plot.figure.savefig(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
+fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
+for index,beta in enumerate(betas):
+    r = index // 5
+    c = index % 5
+    data_beta = data_plot[((data_plot.beta == beta))]
+    data_pfpr = data_beta[[*[str(x+1) for x in range(15)]]]
+    # data_clinical.columns = ['prstr(x+1) for x in range(15)]
+    data_pfpr_melt = data_pfpr.melt()
+    data_pfpr_melt.columns = ["age_class","pfpr"]
+    plot = sns.scatterplot(data=data_pfpr_melt,x="age_class",y="pfpr",ax=axes[r,c])    
+    # plot.set(xscale='log')
+    # eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
+    # pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
+    
+    # if r < 3:
+    #     axes[r,c].set_xlabel("")
+    # if c > 0:
+    #     axes[r,c].set_ylabel("")
+    
+    # axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))   
+figure = plt.gcf() # get current figure
+figure.set_size_inches(16, 12)
+plt.savefig(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)

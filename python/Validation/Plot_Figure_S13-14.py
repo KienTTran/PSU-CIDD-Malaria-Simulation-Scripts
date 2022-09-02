@@ -24,18 +24,19 @@ config_df.set_index('Index', inplace=True)
 first_day = 120
 second_day = 360
 range_1 = [10,14]
-range_2 = range(22,32)#Calibrate_Z_Kappa_0-50 is 21-31, else 22-32    
-tm,kappa = {0.0, 0.1}
-# tm,kappa = {0.5, 0.1}
-z = 5.2
+range_2 = range(22,32)
 
-n_run = 1
+# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
+
+n_run = 100
 data = []
 for index,config in config_df.iterrows():
     # print(index,config)
     for run in range(n_run):
         # print(run)
-        if config.treatment == tm and config.kappa == kappa and config.z == z:
+        if float(config.treatment) == float(tm) and float(config.kappa) == float(kappa) \
+        and float(config.z) == float(z) and float(config.gamma_sd) == float(gamma_sd):
             filename = "validation_monthly_data_%d.txt"%(run + index*1000)
             # print(filename)
             beta = config.beta 
@@ -83,7 +84,7 @@ for index,beta in enumerate(betas):
     eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
     pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
     
-    if r < 3:
+    if r < 5:
         axes[r,c].set_xlabel("")
     if c > 0:
         axes[r,c].set_ylabel("")
