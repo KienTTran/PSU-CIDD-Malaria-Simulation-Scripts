@@ -14,15 +14,15 @@ from matplotlib import pyplot as plt
 
 exp_number = 'Calibrate_beta'
 
-local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\"
+local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\Others" +  "\\"
 local_path_raw = local_path + "\\output"
 local_path_input = local_path + "\\input"
 
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
-# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
-tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
+tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+# tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
 
 #%%
 n_run = 100
@@ -86,18 +86,16 @@ for index,beta in enumerate(betas):
     data_clinical = data_beta[[str(x) for x in ages]]
     data_clinical.columns=[*ages]
     data_clinical_melt = pd.melt(data_clinical)
-    data_clinical_melt.columns = ["age","value"]
-    sns.boxplot(data=data_clinical_melt,x="age",y="value",ax=axes[r,c],
+    data_clinical_melt.columns = ["age","#cli.ep./person/year"]
+    sns.boxplot(data=data_clinical_melt,x="age",y="#cli.ep./person/year",ax=axes[r,c],
                 showfliers=False)
-    # eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
-    # pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
-    
-    # if r < 3:
-    #     axes[r,c].set_xlabel("")
-    # if c > 0:
-    #     axes[r,c].set_ylabel("")
-    
-    # axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))   
+    eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
+    pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])    
+    if r < 5:
+        axes[r,c].set_xlabel("")
+    if c > 0:
+        axes[r,c].set_ylabel("")    
+    axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))   
 figure = plt.gcf() # get current figure
-figure.set_size_inches(16, 12)
+figure.set_size_inches(18, 12)
 plt.savefig(local_path + str(exp_number) + '_S5-6_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)

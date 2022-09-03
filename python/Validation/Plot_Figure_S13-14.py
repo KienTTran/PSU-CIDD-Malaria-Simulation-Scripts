@@ -14,7 +14,7 @@ import seaborn as sns
 
 exp_number = 'Calibrate_beta'
 
-local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\"
+local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\Others" +  "\\"
 local_path_raw = local_path + "\\output"
 local_path_input = local_path + "\\input"
 
