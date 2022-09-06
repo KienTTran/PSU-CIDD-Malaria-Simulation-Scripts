@@ -21,8 +21,8 @@ local_path_input = local_path + "\\input"
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
-tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
-# tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
+# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
 
 #%%
 n_run = 100
@@ -43,7 +43,7 @@ for index,config in config_df.iterrows():
             file_path_monthly = os.path.join(local_path_raw, filename_monthly)
             try:
                 csv_summary = pd.read_csv(file_path_summary,sep='\t',header=None,index_col=None)  
-                row = csv_summary.iloc[0,[4,6,*range(16,76)]]
+                row = csv_summary.iloc[0,[4,6,*range(19,79)]]
                 r_summary = row.to_list()
                 r_summary.append((float)(kappa))
                 r_summary.append((float)(z))

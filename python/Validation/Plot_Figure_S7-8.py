@@ -28,8 +28,8 @@ local_path_input = local_path + "\\input"
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
-tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
-# tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
+# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
 
 #%%
 n_run = 100

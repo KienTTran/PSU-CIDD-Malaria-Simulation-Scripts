@@ -11,8 +11,8 @@ import numpy as np
 import math
 
 exp_number = 'Calibrate_beta'
-figure_number = 'S3'
-# figure_number = 'S4'
+# figure_number = 'S3'
+figure_number = 'S4'
 
 local_path = "D:\\plot\\Validation\\" + str(exp_number) + '\\S34\\' + figure_number +  "\\"
 local_path_raw = local_path + "\\output"
@@ -103,8 +103,7 @@ for i_z, z in enumerate(data.z.unique()):
         func, popt, pcov = my_curve_fit(f_data)
         rmsq_score = sqrt(mean(square( func(observed_EIR, *popt) - observed_age2over10)))
         
-        rmsq_data.append([z, kappa, rmsq_score])
-       
+        rmsq_data.append([z, kappa, rmsq_score])       
         
 #%%
 from scipy.ndimage.filters import gaussian_filter
@@ -115,6 +114,8 @@ rmsq_df.columns = ["z", "kappa", "rmsq_error"]
 
 min_row = rmsq_df.rmsq_error.idxmin()
 print(rmsq_df.iloc[min_row,:])
+
+rmsq_df.iloc[min_row,:].to_csv(local_path + str(exp_number) + '_rmse.csv', index=False, header=False)
 
 rmsq_df.rmsq_error = 2*np.log(rmsq_df.rmsq_error)
 rmsq_df = rmsq_df.pivot("z", "kappa", "rmsq_error")
