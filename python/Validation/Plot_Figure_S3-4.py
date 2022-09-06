@@ -11,8 +11,8 @@ import numpy as np
 import math
 
 exp_number = 'Calibrate_beta'
-# figure_number = 'S3'
-figure_number = 'S4'
+figure_number = 'S3'
+# figure_number = 'S4'
 
 local_path = "D:\\plot\\Validation\\" + str(exp_number) + '\\S34\\' + figure_number +  "\\"
 local_path_raw = local_path + "\\output"
@@ -141,8 +141,8 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from numpy import mean, sqrt, square
 
-nr = 5
-nc = 8
+nr = 4
+nc = 5
 
 fig, axes = plt.subplots(nr, nc, sharex=True, sharey=True,figsize=(8, 6), dpi=300)
 

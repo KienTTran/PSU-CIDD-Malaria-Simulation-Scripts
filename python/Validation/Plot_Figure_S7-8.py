@@ -28,8 +28,8 @@ local_path_input = local_path + "\\input"
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
 
-# tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
-tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
+tm,kappa,z,gamma_sd = (0.0, 0.2, 4.6,10)
+# tm,kappa,z,gamma_sd = (0.5, 0.3, 5.4,10)
 
 #%%
 n_run = 100
@@ -82,11 +82,27 @@ data_plot_melt = data_plot.melt(id_vars=['beta', 'z', 'kappa', 'eir','pfpr'],var
 data_plot_melt = data_plot_melt[data_plot_melt.eir > 1.0]
 
 #%%
-plot = sns.relplot(data=data_plot_melt,
-                x='eir',
-                y='phi',
-                col='age_class',
-                col_wrap=3)
-plot.set(xscale='log')
-plot.set(ylabel='\u03C6')
-plot.figure.savefig(local_path + str(exp_number) + '_S7-8_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
+fig, axes = plt.subplots(5,3,sharex=True,sharey=True)
+age_classes = data_plot_melt.age_class.unique()
+for index,beta in enumerate(age_classes):
+    r = index // 3
+    c = index % 3
+    sns.scatterplot(data=data_plot_melt[data_plot_melt.age_class == str(index+1)],
+            x='eir',
+            y='phi',
+            ax=axes[r,c])
+    
+    if r < 5:
+        axes[r,c].set_xlabel("")
+    if c > 0:
+        axes[r,c].set_ylabel("")    
+    axes[r,c].set_xscale('log')
+    axes[r,c].set_xlabel('EIR')
+    axes[r,c].set_ylabel('\u03C6',rotation=0,fontsize=14)
+    # ax.set_ylim(0,2.0)
+    axes[r,c].set_yticks(np.arange(0,0.21,0.1))
+    axes[r,c].set_title("Age class %d"%(index + 1)) 
+
+figure = plt.gcf() # get current figure
+figure.set_size_inches(18, 10)
+plt.savefig(local_path + str(exp_number) + '_S7-8_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)

@@ -18,15 +18,15 @@ local_path = "D:\\plot\\Validation\\" + str(exp_number) + "\\S1516" +  "\\"
 local_path_raw = local_path + "\\output"
 local_path_input = local_path + "\\input"
 
-tm,kappa,z = (0.0, 0.2, 4.6)
-# tm,kappa,z = (0.5, 0.3, 5.4)
+# tm,kappa,z = (0.0, 0.2, 4.6)
+tm,kappa,z = (0.5, 0.3, 5.4)
 
 #%%
 
 config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=False)
 config_df.set_index('Index', inplace=True)
     
-tm,kappa,z = (config_df.treament.unique(), config_df.kappa.unique(), config_df.z.unique())
+# tm,kappa,z = (config_df.treament.unique(), config_df.kappa.unique(), config_df.z.unique())
 
 n_run = 10
 data = []
@@ -85,8 +85,8 @@ for row in range(2):
             plot_1_0 = sns.scatterplot(data=data_plot, x='eir', y='pfpr', hue='C.V',palette='tab10',ax=axes[row,col])
         if row == 1 and col == 1:
             plot_1_1 = sns.scatterplot(data=data_plot, x='eir', y='phi', hue='C.V',palette='tab10',ax=axes[row,col])
-        axes[row,col].set_xlim(0,150)
-        axes[row,col].set_xticks(range(0,150,50))
+        axes[row,col].set_xlim(0,151)
+        axes[row,col].set_xticks(range(0,151,50))
         
 figure = plt.gcf() # get current figure
 figure.set_size_inches(18, 12)

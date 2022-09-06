@@ -86,16 +86,26 @@ for index,beta in enumerate(betas):
     data_clinical = data_beta[[str(x) for x in ages]]
     data_clinical.columns=[*ages]
     data_clinical_melt = pd.melt(data_clinical)
-    data_clinical_melt.columns = ["age","#cli.ep./person/year"]
-    sns.boxplot(data=data_clinical_melt,x="age",y="#cli.ep./person/year",ax=axes[r,c],
+    data_clinical_melt.columns = ["age","clinical"]
+    sns.boxplot(data=data_clinical_melt,x="age",y="clinical",ax=axes[r,c],
                 showfliers=False)
+    a2_clinical = data_clinical_melt[data_clinical_melt["age"] == 2]['clinical']
+    a10_clinical = data_clinical_melt[data_clinical_melt["age"] == 10]['clinical']
+    r_value = (a2_clinical.values / a10_clinical.values).mean()
+    r_value_x = 2
+    y_max = max(data_clinical_melt["clinical"].values)
+    y_min = min(data_clinical_melt["clinical"].values)
+    r_value_y = (y_min)
+    # print(r,c,r_value_x,y_min,y_max,r_value_y)
+    axes[r,c].text(r_value_x,r_value_y,'r = %.2f'%(r_value))
     eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
-    pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])    
+    pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])     
+    axes[r,c].set_ylabel('#clinical episodes \nper person per year')
     if r < 5:
         axes[r,c].set_xlabel("")
     if c > 0:
         axes[r,c].set_ylabel("")    
-    axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))   
+    axes[r,c].set_title("Prevelance=%.2f%% EIR=%.2f"%(pfpr_percentile[1],eir_percentile[1])) 
 figure = plt.gcf() # get current figure
-figure.set_size_inches(18, 12)
+figure.set_size_inches(18, 10)
 plt.savefig(local_path + str(exp_number) + '_S5-6_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)

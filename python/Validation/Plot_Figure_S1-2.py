@@ -21,8 +21,8 @@ config_df = pd.read_csv(os.path.join(local_path_input,'inputs.csv'),index_col=Fa
 config_df.set_index('Index', inplace=True)
 
 #%%
-# kappa = np.round(np.arange(0.1,2.51,0.1),2)
-kappa = config_df.kappa.unique()
+kappa = np.round(np.arange(0.1,2.51,0.25),2)
+# kappa = config_df.kappa.unique()
 a = np.arange(1,11,1)
 data = []
 a2_10 = math.pow(1.01,10 - 10)*0.0013809
@@ -44,7 +44,7 @@ plot = sns.lineplot(data=data_plot_melt,x='age',y='age2/age10',hue='kappa',palet
 ax.set_xlim(1,10)
 ax.set_xticks(range(1,11,1))
 ax.set_xlabel('Age')
-ax.set_ylabel('a2(age)/a2(10')
+ax.set_ylabel(r'$\dfrac{a2(age)}{a2(10)}$',rotation=0)
 plt.legend(ncol=2)
 
 figure = plt.gcf() # get current figure
@@ -55,7 +55,7 @@ plt.savefig(local_path + str(exp_number) + '_S1.png', dpi=100)
 plt.close('all')
 data = []
 # z = [2.0,4.0,6.0,8.0]	
-z = np.round(np.arange(1,10.01,0.2),2)	
+z = np.round(np.arange(1,10.01,1.0),2)	
 m = np.round(np.arange(0,1.0,0.01),2)
 
 for mm in m:
