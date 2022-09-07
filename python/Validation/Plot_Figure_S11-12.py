@@ -51,7 +51,7 @@ for index,config in config_df.iterrows():
             try:
                 csv_monthly = pd.read_csv(file_path_monthly,sep='\t',header=None,index_col=None)
                 #clinical episode per person per year
-                row = csv_monthly.iloc[:-1,[*range(33,48)]].mean()
+                row = csv_monthly.iloc[:-1,[*range(49,129)]].mean()
                 r_monthly = row.to_list()
                 r_monthly.append((float)(kappa))
                 r_monthly.append((float)(z))
@@ -61,7 +61,7 @@ for index,config in config_df.iterrows():
             data.append(r_summary + r_monthly) 
         
 data_plot = pd.DataFrame(data)
-data_plot.columns = ["eir","pfpr",*[str(x+1) for x in range(15)],"kappa","z","beta"]
+data_plot.columns = ["eir","pfpr",*[str(x+1) for x in range(80)],"kappa","z","beta"]
 #%%
 data_plot.to_csv(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + ".csv",index=False)  
 #%%
@@ -80,9 +80,10 @@ for index,beta in enumerate(betas):
     data_pfpr = data_beta[[*[str(x+1) for x in range(15)]]]
     # data_clinical.columns = ['prstr(x+1) for x in range(15)]
     data_pfpr_melt = data_pfpr.melt()
-    data_pfpr_melt.columns = ["age_class","pfpr"]
-    plot = sns.scatterplot(data=data_pfpr_melt,x="age_class",y="pfpr",ax=axes[r,c]) 
-    axes[r,c].set_xlabel('Age Class')
+    data_pfpr_melt.columns = ["age","pfpr"]
+    plot = sns.scatterplot(data=data_pfpr_melt,x="age",y="pfpr",ax=axes[r,c]) 
+    axes[r,c].set_ylim(0,1.0)
+    axes[r,c].set_xlabel('Age')
     axes[r,c].set_ylabel('Blood Slide Prevalence')
     # eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
     # pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
