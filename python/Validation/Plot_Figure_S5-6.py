@@ -101,7 +101,8 @@ for index,beta in enumerate(betas):
     eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
     pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])     
     axes[r,c].set_ylabel('#clinical episodes \nper person per year')
-    if r < 5:
+    axes[r,c].set_xlabel('Age')
+    if r < 3:
         axes[r,c].set_xlabel("")
     if c > 0:
         axes[r,c].set_ylabel("")    

@@ -73,31 +73,26 @@ sum_moi = data_plot[["moi"+str(x) for x in range(1,10)]].sum(axis=1)
 for x in range(1,10):
     data_plot["moi"+str(x)] = data_plot["moi"+str(x)]/sum_moi   
 
-
+#%%
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-plt.close("all")   
-plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr", hue="month") 
-plot.set(xscale="log")
-plot.set(xlim=(10**-1,10**3),ylim=(0,100))
-plot.set_yticks(range(0,100,10))
-plot.set_xlabel('EIR')
-plot.set_ylabel('% PfPR')
-# plot.set(xlim=(0, 10))
+fig, axes = plt.subplots(2,1,sharex=False,sharey=False, squeeze=True)
 
-plot.figure.savefig(local_path + str(exp_number) + '_S9-10_Log_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
-
-import seaborn as sns
-from matplotlib import pyplot as plt
-
-plt.close("all")   
-plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr", hue="month") 
+plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr",ax=axes[0,]) 
 plot.set(yscale="linear")
-# plot.set(xlim=(0,10**3),ylim=(0,1.0))
-plot.set_xlabel('EIR')
-plot.set_ylabel('% PfPR')
-# plot.set_yticks(range(0,100,10))
-# plot.set(xlim=(0, 10))
+axes[0,].set_xlabel('')
+axes[0,].set_ylabel('% PfPR')
+axes[0,].set_xlim(0,700)
 
-plot.figure.savefig(local_path + str(exp_number) + '_S9-10_Linear_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
+plot = sns.scatterplot(data=data_plot, x="eir", y="pfpr",ax=axes[1,]) 
+axes[1,].set_xlim(10**-1,10**3)
+axes[1,].set_ylim(0,100)
+axes[1,].set_yticks(range(0,100,10))
+axes[1,].set_xlabel('EIR')
+axes[1,].set_ylabel('% PfPR') 
+axes[1,].set_xscale("log")
+
+plot.figure.savefig(local_path + str(exp_number) + '_S9-10_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
+  
+# plot.figure.savefig(local_path + str(exp_number) + '_S9-10_Linear_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)

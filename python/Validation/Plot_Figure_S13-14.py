@@ -69,7 +69,7 @@ for x in range(1,10):
 
 data_120 = data_plot[data_plot.month == 120]   
 betas = data_120.beta.unique()
-
+#%%
 fig, axes = plt.subplots(4,5,sharex=True,sharey=True, squeeze=True)
 for index,beta in enumerate(betas):
     r = index//5
@@ -83,8 +83,10 @@ for index,beta in enumerate(betas):
     
     eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
     pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
-    
-    if r < 5:
+
+    axes[r,c].set_ylabel('Percent Frequency')
+    axes[r,c].set_xlabel('Number of Clones')
+    if r < 3:
         axes[r,c].set_xlabel("")
     if c > 0:
         axes[r,c].set_ylabel("")

@@ -82,7 +82,7 @@ data_plot_melt = data_plot.melt(id_vars=['beta', 'z', 'kappa', 'eir','pfpr'],var
 data_plot_melt = data_plot_melt[data_plot_melt.eir > 1.0]
 
 #%%
-fig, axes = plt.subplots(5,3,sharex=True,sharey=True)
+fig, axes = plt.subplots(5,3,sharex=True,sharey=True,squeeze=True)
 age_classes = data_plot_melt.age_class.unique()
 for index,beta in enumerate(age_classes):
     r = index // 3

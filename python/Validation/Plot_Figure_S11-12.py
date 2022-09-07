@@ -81,8 +81,9 @@ for index,beta in enumerate(betas):
     # data_clinical.columns = ['prstr(x+1) for x in range(15)]
     data_pfpr_melt = data_pfpr.melt()
     data_pfpr_melt.columns = ["age_class","pfpr"]
-    plot = sns.scatterplot(data=data_pfpr_melt,x="age_class",y="pfpr",ax=axes[r,c])    
-    # plot.set(xscale='log')
+    plot = sns.scatterplot(data=data_pfpr_melt,x="age_class",y="pfpr",ax=axes[r,c]) 
+    axes[r,c].set_xlabel('Age Class')
+    axes[r,c].set_ylabel('Blood Slide Prevalence')
     # eir_percentile = np.percentile(data_beta["eir"],[25,50,75])
     # pfpr_percentile = np.percentile(data_beta["pfpr"],[25,50,75])
     
@@ -93,5 +94,5 @@ for index,beta in enumerate(betas):
     
     # axes[r,c].set_title("EIR: %.2f - PFPR: %.2f"%(eir_percentile[1],pfpr_percentile[1]))   
 figure = plt.gcf() # get current figure
-figure.set_size_inches(16, 12)
+figure.set_size_inches(18, 10)
 plt.savefig(local_path + str(exp_number) + '_S11-12_tm' + str(tm) + '_k' + str(kappa) + '_z' + str(z) + '.png', dpi=300)
